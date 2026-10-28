@@ -47,8 +47,9 @@ scripts/dev/compose.sh run --rm dev npm test           # frontend tests
 scripts/dev/compose.sh run --rm -w /app/src-tauri dev cargo test
 ```
 
-The macOS `.dmg` is built by `.github/workflows/build-macos.yml` (universal binary) on every push
-to `main`. Releases follow semver; see [docs/RELEASING.md](docs/RELEASING.md).
+Pull requests and `main` are tested on Linux by `.github/workflows/ci.yml`. The macOS `.dmg` is
+built only for release tags by `.github/workflows/release.yml`; changes are batched into releases
+(semver, see [docs/RELEASING.md](docs/RELEASING.md)). Agents: start with [AGENTS.md](AGENTS.md).
 
 ## Scope
 

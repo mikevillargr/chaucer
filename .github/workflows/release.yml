@@ -1,10 +1,16 @@
-name: Build macOS
+# Release candidate build: universal dmg + signed update feed, published as a draft release.
+# Runs only for version tags (vX.Y.Z) or by hand: day-to-day commits are tested by ci.yml on
+# Linux, so the slow macOS queue is used once per release (see AGENTS.md, Releases).
+name: Release (macOS)
 
 on:
   push:
-    branches: [main]
     tags: ["v*"]
   workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -39,11 +45,10 @@ jobs:
           echo "tag=$tag package.json=$pkg tauri.conf.json=$conf Cargo.toml=$cargo"
           [ "$tag" = "$pkg" ] && [ "$tag" = "$conf" ] && [ "$tag" = "$cargo" ] || { echo "Version mismatch" >&2; exit 1; }
 
+      # Full tests already ran in ci.yml on the merged commit; keep a fast frontend check here.
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
-      - run: cargo test
-        working-directory: src-tauri
 
       # Unsigned universal build. hdiutil on hosted runners sometimes fails with
       # "Resource busy" while creating the dmg, so retry the bundling step.

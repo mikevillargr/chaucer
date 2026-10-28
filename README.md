@@ -1,21 +1,27 @@
 # Chaucer
 
-A Mac desktop client for Gmail, modelled feature-for-feature on the Android Gmail app
-(v2026.10.19) and built on the **public Gmail API**. Tauri v2 (Rust) + React + TypeScript.
+A Mac desktop client for Gmail. Chaucer follows the Android Gmail app feature for feature —
+multiple accounts, inbox categories, threaded conversations, labels, filters, search, drafts,
+aliases and signatures — on the **public Gmail API**, with offline search, native notifications
+and bring-your-own-key AI (Smart Reply, summaries, Help me write). Built with Tauri v2 (Rust) +
+React + TypeScript; styled on the Growth Rocket design system.
 
-Not affiliated with Google. App icon artwork generated with Nano Banana 2.1 (via fal) and shaped with `scripts/spec/make-icon.sh`. No Google code or assets are shipped: the APK was only used as a
-spec — see [docs/feature-inventory.md](docs/feature-inventory.md) (also the test checklist) and
-[docs/design-tokens.md](docs/design-tokens.md).
+**Download:** the latest `.dmg` is on the [Releases page](https://github.com/mikevillargr/chaucer/releases/latest)
+(universal: Apple Silicon and Intel). What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
-## Install (unsigned build)
+Not affiliated with Google. No Google code or assets are shipped: the Android APK was only used
+as a spec — see [docs/feature-inventory.md](docs/feature-inventory.md) (also the test checklist)
+and [docs/design-tokens.md](docs/design-tokens.md). App icon artwork generated with Nano Banana 2.1
+(via fal) and shaped with `scripts/spec/make-icon.sh`.
 
-1. Download `Chaucer_*.dmg` from the latest GitHub Actions run (**Actions → Build macOS →
-   Chaucer-dmg**) or a draft release.
+## Install
+
+1. Download `Chaucer_X.Y.Z_universal.dmg` from [Releases](https://github.com/mikevillargr/chaucer/releases/latest).
 2. Open the dmg and drag Chaucer to Applications.
 3. First launch: macOS blocks apps without an Apple Developer ID. Open **System Settings → Privacy &
    Security**, click **Open Anyway** next to Chaucer, and confirm — or run
    `xattr -dr com.apple.quarantine /Applications/Chaucer.app` once.
-4. Follow [docs/google-setup.md](docs/google-setup.md) to connect your Google Cloud OAuth client.
+4. Follow [docs/google-setup.md](docs/google-setup.md) to connect your own Google Cloud OAuth client.
 
 ## Layout
 
@@ -41,7 +47,7 @@ scripts/dev/compose.sh run --rm -w /app/src-tauri dev cargo test
 ```
 
 The macOS `.dmg` is built by `.github/workflows/build-macos.yml` (universal binary) on every push
-to `main`; pushing a `v*` tag also creates a draft release.
+to `main`. Releases follow semver; see [docs/RELEASING.md](docs/RELEASING.md).
 
 ## Scope
 

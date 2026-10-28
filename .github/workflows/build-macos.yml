@@ -45,11 +45,24 @@ jobs:
           done
           exit 1
 
+      # Tag pushes (vX.Y.Z) create a draft release whose notes are that version's
+      # CHANGELOG.md section; a missing section fails the build (see docs/RELEASING.md).
       - name: Draft release (tags only)
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create "${{ github.ref_name }}" --draft --title "Chaucer ${{ github.ref_name }}" src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          awk -v v="$version" '
+            /^## \[/ { on = index($0, "## [" v "]") == 1; next }
+            on && !/^\[[^]]+\]: / { print }
+          ' CHANGELOG.md > release-notes.md
+          if ! grep -q '[^[:space:]]' release-notes.md; then
+            echo "CHANGELOG.md has no section for $version" >&2
+            exit 1
+          fi
+          gh release create "$GITHUB_REF_NAME" --draft --title "Chaucer $GITHUB_REF_NAME" \
+            --notes-file release-notes.md src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
 
       - uses: actions/upload-artifact@v4
         with:

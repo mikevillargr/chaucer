@@ -50,8 +50,9 @@ pub async fn add_account(handle: AppHandle, app: S<'_>, login_hint: Option<Strin
         handle.opener().open_url(url, None::<&str>).map_err(|e| Error::other(e.to_string()))
     })
     .await?;
-    let gmail = crate::gmail::Gmail::new(app.http.clone(), signed.access_token.clone());
-    let (email, _) = gmail.profile().await?;
+    let probe = crate::gmail::Gmail::new(app.http.clone(), signed.access_token.clone(), Default::default());
+    let (email, _) = probe.profile().await?;
+    let gmail = crate::gmail::Gmail::new(app.http.clone(), signed.access_token.clone(), app.limiter(&email));
     let display_name = gmail
         .send_as()
         .await

@@ -6,7 +6,8 @@ use reqwest::Method;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use std::collections::BTreeSet;
-use std::time::Duration;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 const GMAIL: &str = "https://gmail.googleapis.com/gmail/v1/users/me";
 const PEOPLE: &str = "https://people.googleapis.com/v1";
@@ -98,31 +99,96 @@ pub struct HistoryDelta {
     pub new_inbox: Vec<(String, String)>, // (message id, thread id)
 }
 
+/// Per-account token bucket for Gmail's quota of 15,000 units per user per minute.
+/// Refills a little below the limit so app traffic never trips it.
+pub struct Limiter {
+    state: tokio::sync::Mutex<(f64, Instant)>,
+}
+
+const QUOTA_PER_SEC: f64 = 200.0; // 12,000/min, under the 15,000/min cap
+const QUOTA_BURST: f64 = 2000.0;
+
+impl Default for Limiter {
+    fn default() -> Self {
+        Limiter { state: tokio::sync::Mutex::new((QUOTA_BURST, Instant::now())) }
+    }
+}
+
+impl Limiter {
+    pub async fn take(&self, cost: f64) {
+        loop {
+            let wait = {
+                let mut s = self.state.lock().await;
+                let now = Instant::now();
+                s.0 = (s.0 + now.duration_since(s.1).as_secs_f64() * QUOTA_PER_SEC).min(QUOTA_BURST);
+                s.1 = now;
+                if s.0 >= cost {
+                    s.0 -= cost;
+                    return;
+                }
+                Duration::from_secs_f64((cost - s.0) / QUOTA_PER_SEC)
+            };
+            tokio::time::sleep(wait).await;
+        }
+    }
+}
+
+/// Quota units per call (developers.google.com/gmail/api/reference/quota).
+pub fn quota_cost(method: &Method, url: &str) -> f64 {
+    let Some(path) = url.strip_prefix(GMAIL) else { return 0.0 }; // People API has its own quota
+    if path.ends_with("/send") {
+        100.0
+    } else if path.starts_with("/threads") || path.starts_with("/drafts") {
+        10.0
+    } else if path.contains("/attachments/") || path.starts_with("/messages") {
+        5.0
+    } else if path.starts_with("/history") {
+        2.0
+    } else if path.starts_with("/settings/filters") && method != Method::GET {
+        5.0
+    } else {
+        1.0
+    }
+}
+
+fn is_rate_limit(status: u16, body: &str) -> bool {
+    status == 429
+        || (status == 403
+            && ["rateLimitExceeded", "userRateLimitExceeded", "Quota exceeded", "Rate Limit Exceeded"]
+                .iter()
+                .any(|s| body.contains(s)))
+}
+
 pub struct Gmail {
     http: reqwest::Client,
     token: String,
+    limiter: Arc<Limiter>,
 }
 
 impl Gmail {
-    pub fn new(http: reqwest::Client, token: String) -> Self {
-        Gmail { http, token }
+    pub fn new(http: reqwest::Client, token: String, limiter: Arc<Limiter>) -> Self {
+        Gmail { http, token, limiter }
     }
 
     async fn call(&self, method: Method, url: &str, query: &[(&str, String)], body: Option<Value>) -> Result<Value> {
-        let mut attempt = 0;
+        let mut attempt = 0u32;
         loop {
+            self.limiter.take(quota_cost(&method, url)).await;
             let mut req = self.http.request(method.clone(), url).bearer_auth(&self.token).query(query);
             if let Some(b) = &body {
                 req = req.json(b);
             }
             let resp = req.send().await?;
             let status = resp.status().as_u16();
-            if (status == 429 || status >= 500) && attempt < 3 {
+            let text = resp.text().await?;
+            let limited = is_rate_limit(status, &text);
+            if (limited || status >= 500) && attempt < 5 {
                 attempt += 1;
-                tokio::time::sleep(Duration::from_millis(500 * 2u64.pow(attempt))).await;
+                // Rate limits reset per minute: back off 2s, 4s, 8s, 16s, 32s.
+                let base = if limited { 1000 } else { 250 };
+                tokio::time::sleep(Duration::from_millis(base * 2u64.pow(attempt))).await;
                 continue;
             }
-            let text = resp.text().await?;
             if !(200..300).contains(&status) {
                 let message = serde_json::from_str::<Value>(&text)
                     .ok()
@@ -403,4 +469,35 @@ pub fn decode_b64url(data: &str) -> Result<Vec<u8>> {
     base64::engine::general_purpose::URL_SAFE_NO_PAD_INDIFFERENT
         .decode(data.trim())
         .map_err(|e| Error::other(format!("bad base64 from Gmail: {e}")))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn quota_costs_follow_gmail_table() {
+        assert_eq!(quota_cost(&Method::GET, &format!("{GMAIL}/threads/abc")), 10.0);
+        assert_eq!(quota_cost(&Method::POST, &format!("{GMAIL}/messages/send")), 100.0);
+        assert_eq!(quota_cost(&Method::GET, &format!("{GMAIL}/messages/m/attachments/a")), 5.0);
+        assert_eq!(quota_cost(&Method::GET, &format!("{GMAIL}/history")), 2.0);
+        assert_eq!(quota_cost(&Method::GET, &format!("{GMAIL}/labels/INBOX")), 1.0);
+        assert_eq!(quota_cost(&Method::GET, &format!("{PEOPLE}/otherContacts")), 0.0);
+    }
+
+    #[test]
+    fn detects_rate_limit_responses() {
+        assert!(is_rate_limit(403, r#"{"error":{"message":"Quota exceeded for quota metric"}}"#));
+        assert!(is_rate_limit(429, ""));
+        assert!(!is_rate_limit(403, r#"{"error":{"message":"Insufficient Permission"}}"#));
+    }
+
+    #[tokio::test]
+    async fn limiter_waits_when_bucket_is_empty() {
+        let l = Limiter::default();
+        l.take(QUOTA_BURST).await;
+        let start = Instant::now();
+        l.take(QUOTA_PER_SEC / 10.0).await; // needs ~100ms of refill
+        assert!(start.elapsed() >= Duration::from_millis(80));
+    }
 }

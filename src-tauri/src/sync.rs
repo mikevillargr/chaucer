@@ -11,7 +11,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager};
 
-const CONCURRENCY: usize = 8;
+const CONCURRENCY: usize = 4;
 pub const POLL_INTERVAL: Duration = Duration::from_secs(30);
 const MAX_INLINE_IMAGE: i64 = 4 * 1024 * 1024;
 
@@ -85,16 +85,16 @@ pub async fn full_sync(app: &App, account: &str) -> Result<()> {
     let (_, history_id) = gmail.profile().await?;
     refresh_labels(app, &gmail, account).await?;
     let mut page: Option<String> = None;
-    for _ in 0..3 {
-        let (ids, next) = gmail.list_threads(&["INBOX".into()], None, page.as_deref(), 100).await?;
+    for _ in 0..2 {
+        let (ids, next) = gmail.list_threads(&["INBOX".into()], None, page.as_deref(), 50).await?;
         summaries(app, &gmail, account, &ids).await?;
         match next {
             Some(n) => page = Some(n),
             None => break,
         }
     }
-    for label in ["SENT", "STARRED", "DRAFT", "IMPORTANT"] {
-        let (ids, _) = gmail.list_threads(&[label.into()], None, None, 50).await?;
+    for label in ["SENT", "STARRED", "DRAFT"] {
+        let (ids, _) = gmail.list_threads(&[label.into()], None, None, 25).await?;
         summaries(app, &gmail, account, &ids).await?;
     }
     app.db.set_history_id(account, &history_id)?;

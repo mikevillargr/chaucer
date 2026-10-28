@@ -23,13 +23,19 @@ pub struct App {
     pub tokens: auth::Tokens,
     /// Wakes the sync loop early (after actions, sends, or "Refresh").
     pub wake: tokio::sync::Notify,
+    /// One quota limiter per account, shared by every request for that account.
+    pub limiters: std::sync::Mutex<std::collections::HashMap<String, Arc<gmail::Limiter>>>,
 }
 
 impl App {
+    pub fn limiter(&self, account: &str) -> Arc<gmail::Limiter> {
+        self.limiters.lock().unwrap().entry(account.to_string()).or_default().clone()
+    }
+
     /// A Gmail client with a fresh access token; flags accounts that need signing in again.
     pub async fn gmail(&self, account: &str) -> Result<gmail::Gmail> {
         match self.tokens.access_token(&self.http, self.cfg.google_client(), account).await {
-            Ok(token) => Ok(gmail::Gmail::new(self.http.clone(), token)),
+            Ok(token) => Ok(gmail::Gmail::new(self.http.clone(), token, self.limiter(account))),
             Err(e @ Error::NotSignedIn(_)) => {
                 let _ = self.db.set_needs_reauth(account, true);
                 Err(e)
@@ -66,6 +72,7 @@ pub fn run() {
                 db: db::Db::open(&dir.join("mail.db"))?,
                 tokens: auth::Tokens::default(),
                 wake: tokio::sync::Notify::new(),
+                limiters: Default::default(),
             });
             app.manage(state.clone());
 

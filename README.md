@@ -12,8 +12,9 @@ spec — see [docs/feature-inventory.md](docs/feature-inventory.md) (also the te
 1. Download `Letterbox_*.dmg` from the latest GitHub Actions run (**Actions → Build macOS →
    Letterbox-dmg**) or a draft release.
 2. Open the dmg and drag Letterbox to Applications.
-3. First launch: **right-click Letterbox → Open → Open** (the app isn't signed with an Apple
-   Developer ID yet). If macOS still refuses: System Settings → Privacy & Security → *Open Anyway*.
+3. First launch: macOS blocks apps without an Apple Developer ID. Open **System Settings → Privacy &
+   Security**, click **Open Anyway** next to Letterbox, and confirm — or run
+   `xattr -dr com.apple.quarantine /Applications/Letterbox.app` once.
 4. Follow [docs/google-setup.md](docs/google-setup.md) to connect your Google Cloud OAuth client.
 
 ## Layout

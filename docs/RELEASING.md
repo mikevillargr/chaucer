@@ -16,7 +16,8 @@ Chaucer uses [Semantic Versioning](https://semver.org): `MAJOR.MINOR.PATCH`.
 2. Set the same version in `package.json`, `src-tauri/Cargo.toml` and
    `src-tauri/tauri.conf.json`, then refresh the lockfiles (`npm install --package-lock-only`,
    `cargo update -p chaucer`).
-3. Commit (`Release vX.Y.Z`), tag `vX.Y.Z`, push the commit and the tag.
+3. Commit (`Release vX.Y.Z`), tag `vX.Y.Z`, push the commit and the tag. CI refuses a tag whose
+   version differs from any of the three manifests.
 4. The **Build macOS** workflow builds the universal dmg and creates a **draft** release with
    the dmg, the signed update archive (`Chaucer_X.Y.Z_universal.app.tar.gz` + `.sig`) and
    `latest.json`, using the CHANGELOG section as notes. The build fails if the section or the

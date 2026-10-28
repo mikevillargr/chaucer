@@ -20,7 +20,7 @@ export function IconButton({ icon, label, onClick, fill, small, disabled, classN
 export function Avatar({ addr, small }: { addr: Addr; small?: boolean }) {
   const hue = avatarHue(addr.email);
   return (
-    <div className={`avatar ${small ? "sm" : ""}`} style={{ background: `hsl(${hue} 45% 45%)` }} aria-hidden>
+    <div className={`avatar ${small ? "sm" : ""}`} style={{ background: `hsl(${hue} 32% 40%)` }} aria-hidden>
       {initials(addr)}
     </div>
   );

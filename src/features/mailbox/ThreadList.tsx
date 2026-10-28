@@ -199,13 +199,13 @@ export function ThreadList() {
             <div key={i} className="skeleton"><i style={{ width: 40, height: 40, borderRadius: 20 }} /><div style={{ flex: 1, display: "grid", gap: 8 }}><i style={{ width: "40%" }} /><i style={{ width: "80%" }} /></div></div>
           ))
         ) : list.error ? (
-          <div className="empty"><div><Icon name="error" /><div>{String(list.error)}</div><button className="btn" style={{ marginTop: 12 }} onClick={() => void list.refetch()}>Try again</button></div></div>
+          <div className="empty"><div><Icon name="error" /><div className="title">Couldn't load mail</div><div>{String(list.error)}</div><button className="btn" style={{ marginTop: 12 }} onClick={() => void list.refetch()}>Try again</button></div></div>
         ) : ordered.length === 0 ? (
-          <div className="empty"><div><Icon name={view.label === "SEARCH" ? "search_off" : "inbox"} /><div>{view.label === "SEARCH" ? "No messages matched your search" : "Nothing here"}</div></div></div>
+          <div className="empty grid-paper"><div><Icon name={view.label === "SEARCH" ? "search_off" : "inbox"} /><div className="title">{view.label === "SEARCH" ? "No matches" : "All caught up"}</div><div>{view.label === "SEARCH" ? "No messages matched your search." : "Nothing in this folder."}</div></div></div>
         ) : (
           sections.map((s) => (
             <div key={s.title ?? "all"}>
-              {s.title && s.threads.length > 0 && <div className="list-section">{s.title}</div>}
+              {s.title && s.threads.length > 0 && <div className="list-section"><span className="eyebrow">{s.title}</span></div>}
               {s.threads.map((t) => {
                 const ref = { accountId: t.accountId, threadId: t.id };
                 return (

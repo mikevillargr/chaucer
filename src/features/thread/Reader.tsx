@@ -243,7 +243,7 @@ export function Reader() {
     return (
       <section className="reader" aria-label="Reading pane">
         <div className="reader-bar drag" data-tauri-drag-region />
-        <div className="empty"><div><Icon name="mail" /><div>No conversation selected</div></div></div>
+        <div className="empty grid-paper"><div><Icon name="mail" /><div className="title">No conversation selected</div><div>Pick one from the list, or press <kbd>c</kbd> to write.</div></div></div>
       </section>
     );
   }
@@ -331,7 +331,7 @@ export function Reader() {
             </div>
             {summary && (
               <div className="summary-card">
-                <div className="head"><Icon name="auto_awesome" className="sparkle" /> Summary
+                <div className="head"><span className="eyebrow">Summary</span>
                   <span style={{ flex: 1 }} /><IconButton small icon="close" label="Close summary" onClick={() => setSummary(null)} />
                 </div>
                 {summary.loading ? <Spinner /> : summary.error ? <span className="error-text">{summary.error}</span> : summary.text}

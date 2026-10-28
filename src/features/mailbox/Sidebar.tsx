@@ -58,6 +58,7 @@ export function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar-top drag" data-tauri-drag-region>
+        <span className="wordmark" data-tauri-drag-region><img src="/icon.png" alt="" />Chaucer</span>
         <IconButton icon="settings" label="Settings (⌘,)" onClick={() => openSettings("general")} />
       </div>
       <button className="compose-fab" onClick={() => startCompose()}>
@@ -107,7 +108,7 @@ export function Sidebar() {
         {tree.length > 0 && (
           <>
             <div className="nav-section">
-              Labels
+              <span className="eyebrow">Labels</span>
               <IconButton icon="add" label="Create label" small onClick={() => openSettings("labels")} />
             </div>
             {tree.map(renderNode)}

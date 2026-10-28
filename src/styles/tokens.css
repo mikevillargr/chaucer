@@ -1,110 +1,132 @@
-/* GM3 system colours from the Android Gmail APK (docs/design-tokens.md). */
+/* Chaucer design tokens, built on the Growth Rocket brand system
+   (Growth Rocket Design System, design/gr-design-system/README.md): ink/paper/navy for structure, orange only for action and
+   attention, "space" darks and azure for the dark theme. Fonts: Sora / Geist / Geist Mono. */
+
+@font-face { font-family: "Sora"; src: url("../assets/fonts/sora-var.woff2") format("woff2"); font-weight: 100 800; font-display: swap; }
+@font-face { font-family: "Geist"; src: url("../assets/fonts/geist-var.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: "Geist Mono"; src: url("../assets/fonts/geist-mono-var.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+
 :root,
 [data-theme="light"] {
-  --primary: #0b57d0;
+  /* Brand */
+  --navy: #00233b;
+  --accent: #f58d49;          /* orange: CTAs, unread, stars, focus. Never a large fill. */
+  --accent-hot: #ff7a2e;
+  --on-accent: #040c14;
+  --accent-soft: rgba(245, 141, 73, 0.14);
+  --accent-glow: 0 10px 28px -10px rgba(245, 141, 73, 0.7);
+
+  /* Structure (names kept from the GM3 mapping the components use) */
+  --primary: #00233b;         /* links, active tab text, spinners */
   --on-primary: #ffffff;
-  --primary-container: #d3e3fd;
-  --on-primary-container: #041e49;
-  --secondary-container: #c2e7ff;
-  --on-secondary-container: #001d35;
-  --error: #b3261e;
-  --error-container: #f9dedc;
+  --primary-container: #00233b;
+  --on-primary-container: #ffffff;
+  --secondary-container: rgba(0, 35, 59, 0.08);   /* selected nav / rows */
+  --on-secondary-container: #00233b;
+  --error: #c2410c;
+  --error-container: #fde8dc;
   --surface: #ffffff;
-  --surface-dim: #d3dbe5;
+  --surface-dim: #e6eaee;
   --surface-container-lowest: #ffffff;
-  --surface-container-low: #f8fafd;
-  --surface-container: #f0f4f9;
-  --surface-container-high: #e9eef6;
-  --surface-container-highest: #dde3ea;
-  --on-surface: #1f1f1f;
-  --on-surface-variant: #444746;
-  --outline: #747775;
-  --outline-variant: #c4c7c5;
-  --inverse-surface: #303030;
-  --inverse-on-surface: #f2f2f2;
-  --inverse-primary: #a8c7fa;
-  --star: #f4b400;
-  --important: #f4b400;
-  --hover: rgba(31, 31, 31, 0.06);
-  --pressed: rgba(31, 31, 31, 0.1);
-  --scrim: rgba(0, 0, 0, 0.32);
-  --shadow-1: 0 1px 2px rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
-  --shadow-3: 0 4px 8px 3px rgba(60, 64, 67, 0.15), 0 1px 3px rgba(60, 64, 67, 0.3);
+  --surface-container-low: #f3f5f7;   /* paper: window chrome */
+  --surface-container: #eef1f4;
+  --surface-container-high: #e7ebef;
+  --surface-container-highest: #dde3e8;
+  --on-surface: #0a1b28;
+  --on-surface-variant: #3c4f5e;
+  --outline: #8a98a3;
+  --outline-variant: rgba(10, 27, 40, 0.14);   /* GR hairline on light */
+  --inverse-surface: #00233b;
+  --inverse-on-surface: #e9eef3;
+  --inverse-primary: #f58d49;
+  --star: #f58d49;
+  --hover: rgba(0, 35, 59, 0.045);
+  --pressed: rgba(0, 35, 59, 0.09);
+  --scrim: rgba(4, 12, 20, 0.45);
+  --grid-line: rgba(0, 35, 59, 0.055);
+  --shadow-1: 0 1px 2px rgba(0, 35, 59, 0.08), 0 1px 1px rgba(0, 35, 59, 0.04);
+  --shadow-3: 0 18px 48px -12px rgba(0, 35, 59, 0.28), 0 2px 6px rgba(0, 35, 59, 0.08);
+  --shadow-card: 0 30px 50px -40px rgba(0, 35, 59, 0.5);   /* GR card shadow */
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --primary: #a8c7fa;
-    --on-primary: #062e6f;
-    --primary-container: #0842a0;
-    --on-primary-container: #d3e3fd;
-    --secondary-container: #004a77;
-    --on-secondary-container: #c2e7ff;
-    --error: #f2b8b5;
-    --error-container: #8c1d18;
-    --surface: #131314;
-    --surface-dim: #131314;
-    --surface-container-lowest: #0e0e0e;
-    --surface-container-low: #1b1b1b;
-    --surface-container: #1e1f20;
-    --surface-container-high: #282a2c;
-    --surface-container-highest: #333537;
-    --on-surface: #e3e3e3;
-    --on-surface-variant: #c4c7c5;
-    --outline: #8e918f;
-    --outline-variant: #444746;
-    --inverse-surface: #e3e3e3;
-    --inverse-on-surface: #303030;
-    --inverse-primary: #0b57d0;
-    --hover: rgba(227, 227, 227, 0.08);
-    --pressed: rgba(227, 227, 227, 0.12);
-    --scrim: rgba(0, 0, 0, 0.5);
-    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5), 0 1px 3px 1px rgba(0, 0, 0, 0.3);
-    --shadow-3: 0 4px 8px 3px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.5);
+    --primary: #62d7de;
+    --on-primary: #040c14;
+    --primary-container: #0b2131;
+    --on-primary-container: #e9eef3;
+    --secondary-container: rgba(98, 215, 222, 0.12);
+    --on-secondary-container: #bff1f4;
+    --error: #ffb59a;
+    --error-container: #4a1d0c;
+    --surface: #071622;
+    --surface-dim: #040c14;
+    --surface-container-lowest: #040c14;
+    --surface-container-low: #040c14;
+    --surface-container: #0b2131;
+    --surface-container-high: #0f2a3e;
+    --surface-container-highest: #12304a;
+    --on-surface: #e9eef3;
+    --on-surface-variant: #b4c2cd;
+    --outline: #5d7486;
+    --outline-variant: rgba(233, 238, 243, 0.12);
+    --inverse-surface: #e9eef3;
+    --inverse-on-surface: #040c14;
+    --inverse-primary: #c2410c;
+    --hover: rgba(233, 238, 243, 0.05);
+    --pressed: rgba(233, 238, 243, 0.1);
+    --scrim: rgba(0, 0, 0, 0.6);
+    --grid-line: rgba(98, 215, 222, 0.05);
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5);
+    --shadow-3: 0 18px 48px -12px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.5);
     color-scheme: dark;
   }
 }
 
 [data-theme="dark"] {
-  --primary: #a8c7fa;
-  --on-primary: #062e6f;
-  --primary-container: #0842a0;
-  --on-primary-container: #d3e3fd;
-  --secondary-container: #004a77;
-  --on-secondary-container: #c2e7ff;
-  --error: #f2b8b5;
-  --error-container: #8c1d18;
-  --surface: #131314;
-  --surface-dim: #131314;
-  --surface-container-lowest: #0e0e0e;
-  --surface-container-low: #1b1b1b;
-  --surface-container: #1e1f20;
-  --surface-container-high: #282a2c;
-  --surface-container-highest: #333537;
-  --on-surface: #e3e3e3;
-  --on-surface-variant: #c4c7c5;
-  --outline: #8e918f;
-  --outline-variant: #444746;
-  --inverse-surface: #e3e3e3;
-  --inverse-on-surface: #303030;
-  --inverse-primary: #0b57d0;
-  --hover: rgba(227, 227, 227, 0.08);
-  --pressed: rgba(227, 227, 227, 0.12);
-  --scrim: rgba(0, 0, 0, 0.5);
-  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5), 0 1px 3px 1px rgba(0, 0, 0, 0.3);
-  --shadow-3: 0 4px 8px 3px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.5);
+  --primary: #62d7de;
+  --on-primary: #040c14;
+  --primary-container: #0b2131;
+  --on-primary-container: #e9eef3;
+  --secondary-container: rgba(98, 215, 222, 0.12);
+  --on-secondary-container: #bff1f4;
+  --error: #ffb59a;
+  --error-container: #4a1d0c;
+  --surface: #071622;
+  --surface-dim: #040c14;
+  --surface-container-lowest: #040c14;
+  --surface-container-low: #040c14;
+  --surface-container: #0b2131;
+  --surface-container-high: #0f2a3e;
+  --surface-container-highest: #12304a;
+  --on-surface: #e9eef3;
+  --on-surface-variant: #b4c2cd;
+  --outline: #5d7486;
+  --outline-variant: rgba(233, 238, 243, 0.12);
+  --inverse-surface: #e9eef3;
+  --inverse-on-surface: #040c14;
+  --inverse-primary: #c2410c;
+  --hover: rgba(233, 238, 243, 0.05);
+  --pressed: rgba(233, 238, 243, 0.1);
+  --scrim: rgba(0, 0, 0, 0.6);
+  --grid-line: rgba(98, 215, 222, 0.05);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-3: 0 18px 48px -12px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.5);
   color-scheme: dark;
 }
 
 :root {
-  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
-  --r-chip: 8px;
-  --r-card: 12px;
-  --r-window: 16px;
+  --font: "Geist", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-display: "Sora", "Geist", -apple-system, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --r-chip: 6px;
+  --r-card: 22px;
+  --r-window: 18px;
   --r-pill: 999px;
   --titlebar: 52px;
-  --row-h: 72px;
+  --row-h: 76px;
 }
-[data-density="comfortable"] { --row-h: 64px; }
-[data-density="compact"] { --row-h: 48px; }
+[data-density="comfortable"] { --row-h: 66px; }
+[data-density="compact"] { --row-h: 44px; }

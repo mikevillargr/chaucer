@@ -8,21 +8,29 @@ Chaucer uses [Semantic Versioning](https://semver.org): `MAJOR.MINOR.PATCH`.
 | MINOR | New user-facing feature | 1.1.0 |
 | PATCH | Bug fixes and polish only | 1.0.1 |
 
+## When to release
+
+Changes are batched. Day-to-day work goes on a branch and into a pull request; `ci.yml` runs
+the tests on Linux for every PR and every push to `main`. Nothing is built for macOS until the
+batch is a **release candidate**: then merge, and cut one release for the whole batch. Only
+version tags run the macOS build (`release.yml`), so the slow macOS queue is used once per release.
+
 ## Steps
 
-1. Add a section to the top of `CHANGELOG.md`: `## [X.Y.Z] - YYYY-MM-DD`, grouped by area
+1. Merge the release candidate PR and wait for CI to pass on `main`.
+2. Add a section to the top of `CHANGELOG.md`: `## [X.Y.Z] - YYYY-MM-DD`, grouped by area
    (Mail, Compose, Settings, Smart features, Mac, Fixes), written for users, plus a link line
    at the bottom. This text becomes the GitHub release notes.
-2. Set the same version in `package.json`, `src-tauri/Cargo.toml` and
+3. Set the same version in `package.json`, `src-tauri/Cargo.toml` and
    `src-tauri/tauri.conf.json`, then refresh the lockfiles (`npm install --package-lock-only`,
    `cargo update -p chaucer`).
-3. Commit (`Release vX.Y.Z`), tag `vX.Y.Z`, push the commit and the tag. CI refuses a tag whose
+4. Commit (`Release vX.Y.Z`), tag `vX.Y.Z`, push the commit and the tag. CI refuses a tag whose
    version differs from any of the three manifests.
-4. The **Build macOS** workflow builds the universal dmg and creates a **draft** release with
+5. The **Release (macOS)** workflow builds the universal dmg and creates a **draft** release with
    the dmg, the signed update archive (`Chaucer_X.Y.Z_universal.app.tar.gz` + `.sig`) and
    `latest.json`, using the CHANGELOG section as notes. The build fails if the section or the
    signing key is missing.
-5. Check the draft (notes, assets), then publish it and mark it **Latest**. Installed copies of
+6. Check the draft (notes, assets), then publish it and mark it **Latest**. Installed copies of
    Chaucer read `releases/latest/download/latest.json`, so the update reaches users only once
    the release is published. Don't request asset URLs while the release is still a draft:
    GitHub caches the 404 for a few minutes after publishing, which looks like a broken upload.

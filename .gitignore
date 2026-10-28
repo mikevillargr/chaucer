@@ -1,0 +1,10 @@
+node_modules/
+dist/
+src-tauri/target/
+src-tauri/gen/
+apk/
+tools/
+.env*
+*.local.json
+.claude/settings.local.json
+.DS_Store

@@ -1,0 +1,34 @@
+name: gmail-desktop
+
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: docker/dev.Dockerfile
+    image: gmail-desktop-dev
+    container_name: gmail-desktop-dev
+    user: "1000:1000"
+    working_dir: /app
+    volumes:
+      - .:/app
+      - dev-cache:/cache
+    ports:
+      - "3010:3010"
+    command: ["npm", "run", "dev:web"]
+
+  apkeep:
+    build:
+      context: .
+      dockerfile: docker/apkeep.Dockerfile
+    image: gmail-desktop-apkeep
+    container_name: gmail-desktop-apkeep
+    user: "1000:1000"
+    working_dir: /work
+    volumes:
+      - ./tools/apkeep:/usr/local/bin/apkeep:ro
+      - ./apk:/work/apk
+    entrypoint: ["apkeep"]
+    profiles: ["tools"]
+
+volumes:
+  dev-cache:

@@ -5,6 +5,14 @@ All notable changes to Chaucer. Versions follow [Semantic Versioning](https://se
 **MINOR** for new features, **PATCH** for fixes. Each GitHub release uses its section below as
 its release notes (see [docs/RELEASING.md](https://github.com/mikevillargr/chaucer/blob/main/docs/RELEASING.md)).
 
+## [1.3.0] - 2026-10-28
+
+### Compose
+- **@mentions.** Type `@` or `+` and a name in the body of an email to pick a contact, like
+  in Gmail. The person is inserted as a highlighted mention (a link to their address in the
+  sent email) and added to **To** if they aren't already a recipient. Use ↑/↓ and Enter or
+  Tab to choose, Escape to dismiss. Typing an email address doesn't open the menu.
+
 ## [1.2.0] - 2026-10-28
 
 ### Layout
@@ -101,6 +109,7 @@ the Android Gmail app and built on the public Gmail API.
 - The app isn't notarized: approve it once in System Settings → Privacy & Security.
 - You need your own Google Cloud OAuth client; see [docs/google-setup.md](https://github.com/mikevillargr/chaucer/blob/main/docs/google-setup.md).
 
+[1.3.0]: https://github.com/mikevillargr/chaucer/releases/tag/v1.3.0
 [1.2.0]: https://github.com/mikevillargr/chaucer/releases/tag/v1.2.0
 [1.1.0]: https://github.com/mikevillargr/chaucer/releases/tag/v1.1.0
 [1.0.0]: https://github.com/mikevillargr/chaucer/releases/tag/v1.0.0

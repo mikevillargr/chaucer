@@ -439,3 +439,20 @@ kbd { font: 500 11.5px var(--font-mono); background: var(--surface-container-low
 .update-progress { position: relative; height: 28px; border-radius: var(--r-pill); background: var(--surface-container-high); overflow: hidden; display: grid; place-items: center; font: 500 11px var(--font-mono); }
 .update-progress i { position: absolute; inset: 0 auto 0 0; background: var(--accent-soft); transition: width 0.3s var(--ease); }
 .update-progress span { position: relative; }
+
+/* ---- @mentions ---------------------------------------------------------------------- */
+.editor .tiptap a.mention {
+  color: var(--primary); background: var(--secondary-container); border-radius: 6px; padding: 0 3px;
+  text-decoration: none; font-weight: 600;
+}
+.mention-menu {
+  position: fixed; z-index: 75; min-width: 240px; max-width: 340px; padding: 6px;
+  background: var(--surface); border: 1px solid var(--outline-variant); border-radius: 14px; box-shadow: var(--shadow-3);
+  animation: pop-in var(--dur-fast) var(--ease);
+}
+.mention-menu button {
+  display: flex; flex-direction: column; align-items: flex-start; width: 100%; border: 0; background: none;
+  padding: 6px 10px; border-radius: 8px; text-align: left;
+}
+.mention-menu button.on, .mention-menu button:hover { background: var(--hover); }
+.mention-menu small { color: var(--on-surface-variant); font-size: 11.5px; }

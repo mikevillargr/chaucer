@@ -11,6 +11,7 @@ import { api, native } from "../../lib/ipc";
 import { refreshMail, useAccounts, usePrefs, useProviders, useSendAs } from "../../lib/queries";
 import { useUi, type ComposeState } from "../../lib/store";
 import type { Addr, Draft, DraftAttachment } from "../../lib/types";
+import { mentionExtension, MentionPopup, type MentionMenu } from "./mentions";
 import { RecipientField } from "./RecipientField";
 import { signatureHtml } from "./startCompose";
 
@@ -52,6 +53,16 @@ export function Compose({ c }: { c: ComposeState }) {
   const dirty = useRef(false);
   const state = useRef(c);
   state.current = c;
+  const [mention, setMention] = useState<MentionMenu | null>(null);
+
+  /** A mentioned contact joins To unless they're already a recipient. */
+  const addMentioned = (a: Addr) => {
+    const cur = state.current;
+    const key = a.email.toLowerCase();
+    if ([...cur.to, ...cur.cc, ...cur.bcc].some((r) => r.email.toLowerCase() === key)) return;
+    dirty.current = true;
+    updateCompose(cur.key, { to: [...cur.to, a] });
+  };
 
   const editor = useEditor({
     extensions: [
@@ -59,6 +70,7 @@ export function Compose({ c }: { c: ComposeState }) {
       Link.configure({ openOnClick: false, autolink: true }),
       Image.configure({ allowBase64: true, inline: true }),
       Placeholder.configure({ placeholder: "Compose email" }),
+      mentionExtension({ accountId: () => state.current.accountId, onMenu: setMention, onPick: addMentioned }),
     ],
     content: c.html || "<p></p>",
     autofocus: c.mode === "new" && c.to.length === 0 ? false : "start",
@@ -182,7 +194,8 @@ export function Compose({ c }: { c: ComposeState }) {
   const onKeyDown = (e: React.KeyboardEvent) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); void send(); }
     else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") { e.preventDefault(); dirty.current = true; void saveDraft(false); }
-    else if (e.key === "Escape") { e.preventDefault(); void close(); }
+    // The editor marks keys it consumed (e.g. Escape closing the @mention menu) as handled.
+    else if (e.key === "Escape" && !e.defaultPrevented) { e.preventDefault(); void close(); }
     e.stopPropagation(); // keep global shortcuts out of the editor
   };
 
@@ -212,6 +225,7 @@ export function Compose({ c }: { c: ComposeState }) {
       {!c.minimized && (
         <>
           {dropping && <div className="drop-hint">Drop files to attach</div>}
+          <MentionPopup menu={mention} />
           {(sendAs.length > 1 || ownAccounts) && (
             <div className="field">
               <label>From</label>

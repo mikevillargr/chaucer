@@ -46,6 +46,7 @@ Legend: `[ ]` to do · `[x]` done · API = Gmail API v1 unless noted.
 ## Compose
 - [ ] New, reply, reply all, forward; default reply action — `default_reply_action_*`
 - [ ] Rich text (bold/italic/lists/links), inline images, attachments (drag-drop)
+- [ ] @mentions in the body (`@` or `+`), adding the person to To
 - [ ] To/Cc/Bcc with contact autocomplete → People API `otherContacts` + `connections`
 - [ ] From: send-as aliases → `settings.sendAs.list`
 - [ ] Signature per alias → `sendAs.signature` (desktop equivalent of `MSG_MOBILE_SIGNATURE_TITLE`)

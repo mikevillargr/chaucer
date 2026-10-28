@@ -1,3 +1,16 @@
+import { QueryClientProvider } from "@tanstack/react-query";
+import "material-symbols/rounded.css";
+import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import App from "./App";
+import { queryClient } from "./lib/queries";
+import "./styles/tokens.css";
+import "./styles/app.css";
 
-createRoot(document.getElementById("root")!).render(<p>Letterbox</p>);
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <App />
+    </QueryClientProvider>
+  </StrictMode>,
+);

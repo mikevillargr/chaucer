@@ -23,7 +23,7 @@ Legend: `[ ]` to do · `[x]` done · API = Gmail API v1 unless noted.
 - [ ] Bulk select + select all — `gmail_shortcut_select_all`
 
 ## Reading
-- [ ] Conversation view on/off — `Conversation view` → `threads.get` vs `messages.get`
+- [ ] Conversation view (threads grouped like Gmail) → `threads.get`
 - [ ] Safe HTML rendering, quoted text collapsed — `show_elided`
 - [ ] External images: Ask before displaying / Always display — `MSG_IMAGES_*`
 - [ ] Attachments: preview images/PDF, download, save as → `messages.attachments.get`
@@ -63,8 +63,7 @@ Legend: `[ ]` to do · `[x]` done · API = Gmail API v1 unless noted.
 - [ ] Vacation responder — `MSG_VACATION_RESPONDER_*` → `settings.updateVacation`
 - [ ] Filters list / create / delete → `settings.filters`
 - [ ] Manage labels — `MSG_MANAGE_LABELS_TITLE` → `labels.create/patch/delete`
-- [ ] Notifications per account and per label — `Email notifications`, `label_notifications_title`
-- [ ] Days of mail to cache — `Days of mail to sync`
+- [ ] Notifications per account — `Email notifications`
 
 ## Mac integration
 - [ ] Native notifications for new Inbox mail (click opens thread)
@@ -88,4 +87,5 @@ Legend: `[ ]` to do · `[x]` done · API = Gmail API v1 unless noted.
 Mute (`MSG_MUTE_BUTTON_LABEL`), undo send, schedule send (`MSG_SCHEDULE_MESSAGE_BUTTON`), snooze (`MSG_LABEL_DISPLAY_NAME_FOR_SNOOZED`),
 nudges, confidential mode, dynamic email (AMP), package tracking, AI Inbox, high-priority
 notifications, swipe actions (touch-only), Chat, Spaces, Meet, Exchange/IMAP accounts,
-offline action queue, Windows/Linux builds.
+offline action queue, Windows/Linux builds. Deferred for simplicity: turning conversation view off,
+per-label notifications, configurable days of mail to sync.

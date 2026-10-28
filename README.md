@@ -7,7 +7,8 @@ and bring-your-own-key AI (Smart Reply, summaries, Help me write). Built with Ta
 React + TypeScript; styled on the Growth Rocket design system.
 
 **Download:** the latest `.dmg` is on the [Releases page](https://github.com/mikevillargr/chaucer/releases/latest)
-(universal: Apple Silicon and Intel). What changed in each version: [CHANGELOG.md](CHANGELOG.md).
+(universal: Apple Silicon and Intel). After the first install, Chaucer updates itself.
+What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Not affiliated with Google. No Google code or assets are shipped: the Android APK was only used
 as a spec — see [docs/feature-inventory.md](docs/feature-inventory.md) (also the test checklist)

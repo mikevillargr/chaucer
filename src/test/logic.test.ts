@@ -90,3 +90,12 @@ it("nests labels by slash", () => {
   expect(tree.map((n) => n.short)).toEqual(["Clients", "Receipts"]);
   expect(tree[0].children[0].short).toBe("NCH");
 });
+
+describe("update notes", () => {
+  it("flattens changelog markdown for the update card", async () => {
+    const { plainNotes } = await import("../features/updates/updates");
+    expect(plainNotes("### Mail\n- **Undo** for actions\n\nSee [setup](https://x.y/z).\n")).toEqual([
+      "### Mail", "- Undo for actions", "See setup.",
+    ]);
+  });
+});

@@ -35,10 +35,25 @@ jobs:
 
       # Unsigned universal build. hdiutil on hosted runners sometimes fails with
       # "Resource busy" while creating the dmg, so retry the bundling step.
+      # Updater artifacts (Chaucer.app.tar.gz + .sig) are signed with the key in the
+      # TAURI_SIGNING_PRIVATE_KEY secrets. Without the key, ordinary builds skip them,
+      # but release tags fail so a release never ships without in-app updates.
       - name: Build app and dmg
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
+          extra=""
+          if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+              echo "TAURI_SIGNING_PRIVATE_KEY secret is missing: release builds must be signed for updates" >&2
+              exit 1
+            fi
+            echo "No updater signing key; building without update artifacts"
+            extra='--config {"bundle":{"createUpdaterArtifacts":false}}'
+          fi
           for attempt in 1 2 3; do
-            npm run tauri build -- --target universal-apple-darwin && exit 0
+            npm run tauri build -- --target universal-apple-darwin $extra && exit 0
             echo "Build attempt $attempt failed; retrying in 15s"
             hdiutil info | grep -E "^/dev/disk" | awk "{print \$1}" | xargs -n1 hdiutil detach -force 2>/dev/null || true
             sleep 15
@@ -61,8 +76,25 @@ jobs:
             echo "CHANGELOG.md has no section for $version" >&2
             exit 1
           fi
+          # In-app update feed: the app reads releases/latest/download/latest.json.
+          bundle=src-tauri/target/universal-apple-darwin/release/bundle
+          archive="Chaucer_${version}_universal.app.tar.gz"
+          cp "$bundle/macos/Chaucer.app.tar.gz" "$archive"
+          cp "$bundle/macos/Chaucer.app.tar.gz.sig" "$archive.sig"
+          VERSION="$version" ARCHIVE="$archive" node -e '
+            const fs = require("fs");
+            const url = `https://github.com/${process.env.GITHUB_REPOSITORY}/releases/download/${process.env.GITHUB_REF_NAME}/${process.env.ARCHIVE}`;
+            const signature = fs.readFileSync(process.env.ARCHIVE + ".sig", "utf8").trim();
+            const platform = { signature, url };
+            fs.writeFileSync("latest.json", JSON.stringify({
+              version: process.env.VERSION,
+              notes: fs.readFileSync("release-notes.md", "utf8").trim(),
+              pub_date: new Date().toISOString(),
+              platforms: { "darwin-aarch64": platform, "darwin-x86_64": platform },
+            }, null, 2));
+          '
           gh release create "$GITHUB_REF_NAME" --draft --title "Chaucer $GITHUB_REF_NAME" \
-            --notes-file release-notes.md src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
+            --notes-file release-notes.md "$bundle"/dmg/*.dmg "$archive" "$archive.sig" latest.json
 
       - uses: actions/upload-artifact@v4
         with:

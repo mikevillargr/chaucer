@@ -7,6 +7,8 @@ import { refreshMail, useAccounts, useLabels, usePrefs, useProviders, useSetPref
 import { useUi } from "../../lib/store";
 import type { Prefs, Vacation } from "../../lib/types";
 import { SmartSettings } from "./SmartSettings";
+import { useUpdates } from "../updates/updates";
+import { isTauri } from "../../lib/ipc";
 
 const SECTIONS = [
   { id: "general", name: "General", icon: "tune" },
@@ -81,9 +83,36 @@ function General() {
       <Toggle k="confirmArchive" title="Confirm before archiving" />
       <Toggle k="confirmDelete" title="Confirm before deleting" />
       <Toggle k="confirmSend" title="Confirm before sending" />
+      <Updates />
       <h2 style={{ marginTop: 32 }}>Keyboard shortcuts</h2>
       <p className="lead">Press <kbd>?</kbd> anywhere to see them.</p>
     </>
+  );
+}
+
+function Updates() {
+  const { status, version, error, check, install } = useUpdates();
+  const [current, setCurrent] = useState<string>("");
+  useEffect(() => {
+    if (isTauri) void import("@tauri-apps/api/app").then((m) => m.getVersion()).then(setCurrent);
+  }, []);
+  const text = {
+    idle: "Chaucer checks for updates automatically.",
+    checking: "Checking…",
+    available: `Version ${version} is available.`,
+    downloading: "Downloading…",
+    installing: "Installing… Chaucer will restart.",
+    uptodate: "You're up to date.",
+    error: `Couldn't check for updates: ${error}`,
+  }[status];
+  return (
+    <Setting title={current ? `Chaucer ${current}` : "Chaucer"} hint={text}>
+      {status === "available" ? (
+        <button className="btn ink" onClick={() => void install()}>Restart to update</button>
+      ) : (
+        <button className="btn" disabled={!isTauri || status === "checking"} onClick={() => void check(true)}>Check for updates</button>
+      )}
+    </Setting>
   );
 }
 

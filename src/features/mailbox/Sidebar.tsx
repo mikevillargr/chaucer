@@ -5,6 +5,7 @@ import { useAccounts, useLabels } from "../../lib/queries";
 import { useUi } from "../../lib/store";
 import type { Label } from "../../lib/types";
 import { useStartCompose } from "../compose/startCompose";
+import { UpdateBanner } from "../updates/UpdateBanner";
 
 function sumUnread(labels: Label[], id: string) {
   return labels.filter((l) => l.id === id).reduce((n, l) => n + l.threadsUnread, 0);
@@ -115,6 +116,7 @@ export function Sidebar() {
           </>
         )}
       </nav>
+      <UpdateBanner />
     </aside>
   );
 }

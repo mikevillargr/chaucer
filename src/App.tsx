@@ -9,6 +9,7 @@ import { Settings } from "./features/settings/Settings";
 import { Onboarding } from "./features/setup/Onboarding";
 import { SHORTCUTS, useShortcuts } from "./features/shortcuts";
 import { Reader } from "./features/thread/Reader";
+import { CHECK_INTERVAL_MS, useUpdates } from "./features/updates/updates";
 import { parseMailto } from "./lib/format";
 import { on } from "./lib/ipc";
 import { refreshMail, usePrefs, useStatus } from "./lib/queries";
@@ -50,6 +51,13 @@ export default function App() {
     else delete root.dataset.theme;
     root.dataset.density = prefs.density ?? "default";
   }, [prefs.theme, prefs.density]);
+
+  // Look for app updates shortly after launch, then every few hours.
+  useEffect(() => {
+    const first = setTimeout(() => void useUpdates.getState().check(), 15_000);
+    const every = setInterval(() => void useUpdates.getState().check(), CHECK_INTERVAL_MS);
+    return () => { clearTimeout(first); clearInterval(every); };
+  }, []);
 
   useEffect(() => {
     const subs = [

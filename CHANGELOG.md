@@ -5,6 +5,25 @@ All notable changes to Chaucer. Versions follow [Semantic Versioning](https://se
 **MINOR** for new features, **PATCH** for fixes. Each GitHub release uses its section below as
 its release notes (see [docs/RELEASING.md](https://github.com/mikevillargr/chaucer/blob/main/docs/RELEASING.md)).
 
+## [1.1.0] - 2026-10-28
+
+### In-app updates
+- Chaucer now updates itself. It checks for a new release shortly after launch and every few
+  hours; when one is available, a card at the bottom of the sidebar shows the version and
+  **What's new**. Click **Restart to update** and Chaucer downloads, verifies and installs it,
+  then relaunches. No more downloading DMGs.
+- Every update is signed, and Chaucer refuses to install anything whose signature doesn't match.
+- **Settings → General** shows the installed version and a **Check for updates** button.
+- Updates installed this way don't trigger the macOS "could not verify" warning.
+
+### Fixes
+- Trackpad and mouse-wheel scrolling now works in the conversation list and the reading pane.
+
+### Note
+- Version 1.0.0 can't update itself: install 1.1.0 from the DMG once. Later versions arrive
+  automatically. After an update, macOS may ask to let Chaucer use the Keychain: choose
+  **Always Allow**.
+
 ## [1.0.0] - 2026-10-28
 
 The first release of Chaucer: a Mac desktop client for Gmail, modelled feature-for-feature on
@@ -56,4 +75,5 @@ the Android Gmail app and built on the public Gmail API.
 - The app isn't notarized: approve it once in System Settings → Privacy & Security.
 - You need your own Google Cloud OAuth client; see [docs/google-setup.md](https://github.com/mikevillargr/chaucer/blob/main/docs/google-setup.md).
 
+[1.1.0]: https://github.com/mikevillargr/chaucer/releases/tag/v1.1.0
 [1.0.0]: https://github.com/mikevillargr/chaucer/releases/tag/v1.0.0

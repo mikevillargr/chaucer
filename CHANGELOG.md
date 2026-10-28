@@ -5,6 +5,23 @@ All notable changes to Chaucer. Versions follow [Semantic Versioning](https://se
 **MINOR** for new features, **PATCH** for fixes. Each GitHub release uses its section below as
 its release notes (see [docs/RELEASING.md](https://github.com/mikevillargr/chaucer/blob/main/docs/RELEASING.md)).
 
+## [1.5.0] - 2026-10-28
+
+### Settings
+- **Three new themes.** Pick **Kinetic**, **Terminal Green** or **Terminal White** under
+  Settings → General → Theme. Kinetic is black with white hairlines, square corners and a
+  single mono typeface, with green for actions. The two Terminal themes are a 1980s green-screen
+  and a white-phosphor display, with double-line borders, inverse-video selection, scanlines and
+  stepped animation. All three are dark-only, and emails are shown in dark colours with the
+  usual "Original colours" toggle.
+
+### Smart features
+- **Summarize shows progress.** The button now shows a spinner and "Summarizing…" while it
+  works, can't be double-clicked, and reads "Summarize again" afterwards.
+
+### Fixes
+- Buttons now react to hover, press and keyboard focus consistently.
+
 ## [1.4.0] - 2026-10-28
 
 ### Smart features
@@ -121,6 +138,8 @@ the Android Gmail app and built on the public Gmail API.
 - The app isn't notarized: approve it once in System Settings → Privacy & Security.
 - You need your own Google Cloud OAuth client; see [docs/google-setup.md](https://github.com/mikevillargr/chaucer/blob/main/docs/google-setup.md).
 
+[1.5.0]: https://github.com/mikevillargr/chaucer/releases/tag/v1.5.0
+[1.4.0]: https://github.com/mikevillargr/chaucer/releases/tag/v1.4.0
 [1.3.0]: https://github.com/mikevillargr/chaucer/releases/tag/v1.3.0
 [1.2.0]: https://github.com/mikevillargr/chaucer/releases/tag/v1.2.0
 [1.1.0]: https://github.com/mikevillargr/chaucer/releases/tag/v1.1.0

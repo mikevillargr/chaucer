@@ -1,4 +1,3 @@
-import { flushSync } from "react-dom";
 import { create } from "zustand";
 import type { Addr, DraftAttachment, ThreadRef } from "./types";
 
@@ -77,14 +76,7 @@ export const useUi = create<UiState>((set) => ({
   order: [],
   setOrder: (order) => set({ order }),
   setView: (view) => set({ view, selected: null, checked: [] }),
-  // Opening or closing the reading pane animates the layout change where supported.
-  select: (selected) => {
-    const togglesPane = !selected !== !useUi.getState().selected;
-    const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown };
-    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (togglesPane && doc.startViewTransition && !reduce) doc.startViewTransition(() => flushSync(() => set({ selected })));
-    else set({ selected });
-  },
+  select: (selected) => set({ selected }),
   toggleChecked: (key) =>
     set((s) => ({ checked: s.checked.includes(key) ? s.checked.filter((k) => k !== key) : [...s.checked, key] })),
   setChecked: (checked) => set({ checked }),

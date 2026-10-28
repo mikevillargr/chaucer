@@ -388,14 +388,9 @@ kbd { font: 500 11.5px var(--font-mono); background: var(--surface-container-low
 @keyframes pane-in { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
 @keyframes scale-in { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: none; } }
 
-.reader { view-transition-name: reader; }
-/* Older WebKit without View Transitions: slide the reader in on open instead. */
-@supports not (view-transition-name: none) { .reader { animation: pane-in var(--dur) var(--ease); } }
-.list-pane { view-transition-name: list; }
-.sidebar { view-transition-name: sidebar; }
-::view-transition-group(*) { animation-duration: var(--dur); animation-timing-function: var(--ease); }
-::view-transition-new(reader) { animation: pane-in var(--dur) var(--ease); }
-::view-transition-old(reader) { animation: fade-in var(--dur-fast) var(--ease) reverse both; }
+/* Compositor-only slide (transform/opacity). View Transitions morphed the list pane's size each
+   time the reader opened, which stutters in WKWebView. */
+.reader { animation: pane-in var(--dur) var(--ease); }
 
 .menu, .search-pop, .suggest { animation: pop-in var(--dur-fast) var(--ease); transform-origin: top; }
 .scrim { animation: fade-in var(--dur) var(--ease); }
@@ -405,12 +400,11 @@ kbd { font: 500 11.5px var(--font-mono); background: var(--surface-container-low
 .settings { animation: fade-in var(--dur-fast) var(--ease); }
 .settings-main > * { animation: rise-in var(--dur) var(--ease); }
 .lightbox { animation: fade-in var(--dur) var(--ease); }
-.row { animation: fade-in var(--dur) var(--ease); }
 .msg-body, .attachments, .summary-card, .smart-chips, .help-write { animation: fade-in var(--dur) var(--ease); }
 .tab, .btn, .icon-btn { transition-property: background-color, color, border-color, transform, box-shadow; transition-duration: var(--dur-fast); }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after, ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) {
+  *, *::before, *::after {
     animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important;
   }
 }

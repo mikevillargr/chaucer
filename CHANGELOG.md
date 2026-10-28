@@ -5,6 +5,32 @@ All notable changes to Chaucer. Versions follow [Semantic Versioning](https://se
 **MINOR** for new features, **PATCH** for fixes. Each GitHub release uses its section below as
 its release notes (see [docs/RELEASING.md](https://github.com/mikevillargr/chaucer/blob/main/docs/RELEASING.md)).
 
+## [1.2.0] - 2026-10-28
+
+### Layout
+- **Resizable panes.** Drag the divider beside the sidebar or the conversation list to resize
+  it; double-click a divider to reset. Chaucer remembers your widths and always leaves room
+  for the reading pane. Dividers also work from the keyboard (focus, then ←/→).
+
+### Motion
+- The reading pane slides in and out when you open or close a conversation.
+- Menus, dialogs, compose windows, toasts, search suggestions and expanding messages now
+  ease in instead of appearing abruptly. Everything stays quick (under a quarter second),
+  and all motion switches off when macOS **Reduce motion** is on.
+
+### Dark mode
+- **Email bodies now follow dark mode.** Ordinary emails are shown in dark colours, with
+  hard-coded dark text recoloured to stay readable. Designed emails (newsletters, receipts)
+  keep the sender's colours on a light card so they aren't broken. A **Dark / Original
+  colours** switch on each message lets you choose.
+
+### Readability
+- The selected inbox category is now navy (azure in dark mode), so it no longer competes with
+  the orange **Compose** button.
+- Every screen was checked for colour contrast (WCAG AA) in light and dark mode. Fixed: avatar
+  initials on some colours, label chips using Gmail colours with low contrast, the drop-files
+  hint in compose, and the All inboxes icon in dark mode.
+
 ## [1.1.0] - 2026-10-28
 
 ### In-app updates
@@ -75,5 +101,6 @@ the Android Gmail app and built on the public Gmail API.
 - The app isn't notarized: approve it once in System Settings → Privacy & Security.
 - You need your own Google Cloud OAuth client; see [docs/google-setup.md](https://github.com/mikevillargr/chaucer/blob/main/docs/google-setup.md).
 
+[1.2.0]: https://github.com/mikevillargr/chaucer/releases/tag/v1.2.0
 [1.1.0]: https://github.com/mikevillargr/chaucer/releases/tag/v1.1.0
 [1.0.0]: https://github.com/mikevillargr/chaucer/releases/tag/v1.0.0

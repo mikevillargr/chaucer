@@ -70,6 +70,11 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 650; letter-spacing:
 .btn.tonal { background: var(--secondary-container); color: var(--on-secondary-container); border-color: transparent; }
 .btn.text { border-color: transparent; padding: 0 12px; color: var(--primary); }
 .btn.text:hover { background: var(--hover); }
+.btn.tonal:hover { background: color-mix(in srgb, var(--secondary-container) 82%, var(--on-secondary-container)); }
+.btn:active:not(:disabled) { transform: scale(0.97); }
+.btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.btn[aria-busy="true"]:disabled { opacity: 1; cursor: progress; }
+.btn .spinner { width: 16px; height: 16px; }
 .btn.danger { color: var(--error); }
 .btn:disabled { opacity: 0.38; transform: none; box-shadow: none; }
 .btn .ms { font-size: 18px; }

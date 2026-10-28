@@ -23,7 +23,8 @@ Chaucer uses [Semantic Versioning](https://semver.org): `MAJOR.MINOR.PATCH`.
    signing key is missing.
 5. Check the draft (notes, assets), then publish it and mark it **Latest**. Installed copies of
    Chaucer read `releases/latest/download/latest.json`, so the update reaches users only once
-   the release is published.
+   the release is published. Don't request asset URLs while the release is still a draft:
+   GitHub caches the 404 for a few minutes after publishing, which looks like a broken upload.
 
 ## In-app updates and the signing key
 

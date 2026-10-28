@@ -5,6 +5,18 @@ All notable changes to Chaucer. Versions follow [Semantic Versioning](https://se
 **MINOR** for new features, **PATCH** for fixes. Each GitHub release uses its section below as
 its release notes (see [docs/RELEASING.md](https://github.com/mikevillargr/chaucer/blob/main/docs/RELEASING.md)).
 
+## [1.4.0] - 2026-10-28
+
+### Smart features
+- **Moonshot (Kimi) provider.** Add Kimi under Settings → Smart features. Regular Moonshot keys
+  use the international API; Kimi Code keys (`sk-kimi-…`) are routed to the Kimi Code endpoint
+  automatically, with the model `kimi-for-coding`. Kimi's reasoning no longer leaves replies empty.
+
+### Layout
+- **Smoother reading pane on Mac.** Opening a conversation now slides the reader in without
+  the stutter, and the conversation list no longer re-animates every row. Closing the reader
+  no longer animates.
+
 ## [1.3.0] - 2026-10-28
 
 ### Compose

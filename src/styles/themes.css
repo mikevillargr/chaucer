@@ -1,0 +1,391 @@
+/* Chaucer themes: Kinetic, Terminal Green, Terminal White. Ported from the TARS themes
+   (tars/apps/web/app/themes/{kinetic,terminal}.css) onto Chaucer's token names.
+   A theme is skin plus motion: no layout, copy or behaviour changes. All three are dark-only.
+
+   Selection: Settings > Theme writes prefs.theme ("kinetic" | "terminal-green" | "terminal-white");
+   App.tsx puts it on <html data-theme> and the family on <html data-family="kinetic|terminal">.
+   Token blocks use :root[data-theme=...] (0,2,0) so they beat the OS-dark media rule in tokens.css.
+   Structure rules key on data-family, so the two terminal themes share them and differ only in tokens. */
+
+@font-face { font-family: "Martian Mono"; src: url("../assets/fonts/martian-mono-var.woff2") format("woff2"); font-weight: 100 800; font-stretch: 75% 112.5%; font-display: swap; }
+@font-face { font-family: "VT323"; src: url("../assets/fonts/vt323.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+
+/* ═══ Kinetic: GT Planar lineage ═══════════════════════════════════════════════════════════
+   Void black, white hairlines, 0 radius (pills only for label chips), one variable mono face.
+   Green = act / focus / active. Orange and red are for warnings and errors only.
+   Reject: shadows, gradients, rounded panes, a second font family. */
+:root[data-theme="kinetic"] {
+  --navy: #000000;
+  --accent: #00ff85;
+  --accent-hot: #00ff85;
+  --on-accent: #000000;
+  --accent-soft: rgba(0, 255, 133, 0.12);
+  --accent-glow: none;
+  --selected-strong: #ffffff;
+  --on-selected-strong: #000000;
+
+  --primary: #00ff85;
+  --on-primary: #000000;
+  --primary-container: #111111;
+  --on-primary-container: #ffffff;
+  --secondary-container: rgba(0, 255, 133, 0.12);
+  --on-secondary-container: #ffffff;
+  --error: #ff4d6d;                  /* lifted from #ff003d so small text clears AA on black */
+  --error-container: #2a000c;
+  --surface: #000000;
+  --surface-dim: #000000;
+  --surface-container-lowest: #000000;
+  --surface-container-low: #000000;
+  --surface-container: #0a0a0a;
+  --surface-container-high: #111111;
+  --surface-container-highest: #1a1a1a;
+  --on-surface: #ffffff;
+  --on-surface-variant: #a8a8a8;     /* 8:1 on #000 */
+  --outline: #8a8a8a;
+  --outline-variant: #2a2a2a;        /* inner dividers; structural edges are white (rules below) */
+  --inverse-surface: #ffffff;
+  --inverse-on-surface: #000000;
+  --inverse-primary: #00ff85;
+  --star: #00ff85;
+  --hover: rgba(255, 255, 255, 0.08);
+  --pressed: rgba(255, 255, 255, 0.16);
+  --scrim: rgba(0, 0, 0, 0.78);
+  --grid-line: rgba(255, 255, 255, 0.07);
+  --shadow-1: none;
+  --shadow-3: none;
+  --shadow-card: none;
+  color-scheme: dark;
+
+  --font: "Martian Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-display: "Martian Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-mono: "Martian Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ease: cubic-bezier(0.7, 0, 0.2, 1);
+  --dur-fast: 80ms;
+  --dur: 260ms;
+  --r-chip: 0;
+  --r-card: 0;
+  --r-window: 0;
+  --r-pill: 0;
+}
+
+/* ═══ Terminal Green: IBM 5151 phosphor ════════════════════════════════════════════════════
+   1980s DOS green-screen. One hue, so hierarchy is brightness and never a second colour.
+   Double-line borders, inverse video for selection, VT323, 0 radius, stepped motion. */
+:root[data-theme="terminal-green"] {
+  --t-ink: #2bd62b;                  /* structure below reads these, so another phosphor is only tokens */
+  --t-bright: #8cff8c;
+  --t-dim: #146014;                  /* decorative hairlines; text pairs all pass AA */
+  --t-btn-shadow: #0b4a0b;
+  --t-bloom: rgba(43, 214, 43, 0.45);
+
+  --navy: #2bd62b;
+  --accent: #8cff8c;
+  --accent-hot: #d6ffd6;
+  --on-accent: #000000;
+  --accent-soft: rgba(140, 255, 140, 0.12);
+  --accent-glow: none;
+  --selected-strong: #2bd62b;
+  --on-selected-strong: #000000;
+
+  --primary: #8cff8c;
+  --on-primary: #000000;
+  --primary-container: #0a1f0a;
+  --on-primary-container: #8cff8c;
+  --secondary-container: rgba(43, 214, 43, 0.14);
+  --on-secondary-container: #8cff8c;
+  --error: #d6ffd6;                  /* urgency is brightness, not red */
+  --error-container: #0a1f0a;
+  --surface: #000000;
+  --surface-dim: #000000;
+  --surface-container-lowest: #000000;
+  --surface-container-low: #000000;
+  --surface-container: #030a03;
+  --surface-container-high: #061406;
+  --surface-container-highest: #0a1f0a;
+  --on-surface: #2bd62b;
+  --on-surface-variant: #22b022;
+  --outline: #1f9a1f;                /* 5.7:1 on #000 */
+  --outline-variant: #146014;
+  --inverse-surface: #2bd62b;
+  --inverse-on-surface: #000000;
+  --inverse-primary: #8cff8c;
+  --star: #8cff8c;
+  --hover: rgba(43, 214, 43, 0.12);
+  --pressed: rgba(43, 214, 43, 0.22);
+  --scrim: rgba(0, 0, 0, 0.82);
+  --grid-line: rgba(43, 214, 43, 0.08);
+  --shadow-1: none;
+  --shadow-3: none;
+  --shadow-card: none;
+  color-scheme: dark;
+}
+
+/* ═══ Terminal White: P4 white phosphor (Macintosh 128K, DEC VT100) ═══════════════════════
+   Same grammar as Terminal Green; a slightly cool grey-white ink with full white as the bright step. */
+:root[data-theme="terminal-white"] {
+  --t-ink: #c4cacf;
+  --t-bright: #f4f7f8;
+  --t-dim: #3a4146;
+  --t-btn-shadow: #2a3034;
+  --t-bloom: rgba(196, 202, 207, 0.4);
+
+  --navy: #c4cacf;
+  --accent: #f4f7f8;
+  --accent-hot: #ffffff;
+  --on-accent: #000000;
+  --accent-soft: rgba(244, 247, 248, 0.12);
+  --accent-glow: none;
+  --selected-strong: #c4cacf;
+  --on-selected-strong: #000000;
+
+  --primary: #f4f7f8;
+  --on-primary: #000000;
+  --primary-container: #161b1e;
+  --on-primary-container: #f4f7f8;
+  --secondary-container: rgba(196, 202, 207, 0.14);
+  --on-secondary-container: #f4f7f8;
+  --error: #ffffff;
+  --error-container: #161b1e;
+  --surface: #000000;
+  --surface-dim: #000000;
+  --surface-container-lowest: #000000;
+  --surface-container-low: #000000;
+  --surface-container: #07090a;
+  --surface-container-high: #0e1214;
+  --surface-container-highest: #161b1e;
+  --on-surface: #c4cacf;
+  --on-surface-variant: #a4abb0;
+  --outline: #8a9298;                /* 6.8:1 on #000 */
+  --outline-variant: #3a4146;
+  --inverse-surface: #c4cacf;
+  --inverse-on-surface: #000000;
+  --inverse-primary: #f4f7f8;
+  --star: #f4f7f8;
+  --hover: rgba(196, 202, 207, 0.12);
+  --pressed: rgba(196, 202, 207, 0.22);
+  --scrim: rgba(0, 0, 0, 0.82);
+  --grid-line: rgba(196, 202, 207, 0.08);
+  --shadow-1: none;
+  --shadow-3: none;
+  --shadow-card: none;
+  color-scheme: dark;
+}
+
+/* Fonts, shape and motion shared by both terminal tokens. */
+:root[data-family="terminal"] {
+  --font: "VT323", "Perfect DOS VGA 437", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-display: "VT323", "Perfect DOS VGA 437", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-mono: "VT323", "Perfect DOS VGA 437", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ease: steps(6, end);              /* a terminal does not ease */
+  --dur-fast: 60ms;
+  --dur: 240ms;
+  --r-chip: 0;
+  --r-card: 0;
+  --r-window: 0;
+  --r-pill: 0;
+}
+
+/* ═══ Kinetic: structure ═══════════════════════════════════════════════════════════════ */
+:root[data-family="kinetic"] body { font-size: 12.5px; font-variation-settings: "wdth" 87.5; font-feature-settings: "tnum" 1; letter-spacing: 0; }
+:root[data-family="kinetic"] ::selection { background: #00ff85; color: #000; }
+:root[data-family="kinetic"] :focus-visible { outline: 2px solid #00ff85; outline-offset: 2px; }
+:root[data-family="kinetic"] h1, :root[data-family="kinetic"] h2, :root[data-family="kinetic"] .dialog h2 {
+  text-transform: uppercase; font-weight: 800; font-variation-settings: "wdth" 75; letter-spacing: -0.04em;
+}
+:root[data-family="kinetic"] .thread-title h1 { font-size: 22px; line-height: 26px; }
+:root[data-family="kinetic"] .eyebrow, :root[data-family="kinetic"] .field > label { font-variation-settings: "wdth" 100; letter-spacing: 0.1em; font-size: 10px; }
+:root[data-family="kinetic"] .eyebrow::before { background: #00ff85; border-radius: 0; }
+:root[data-family="kinetic"] .row .from, :root[data-family="kinetic"] .row .subject, :root[data-family="kinetic"] .nav-item { font-size: 12.5px; }
+:root[data-family="kinetic"] .row .snippet, :root[data-family="kinetic"] .msg-head .email, :root[data-family="kinetic"] .msg-head .to { font-size: 11.5px; }
+:root[data-family="kinetic"] .msg-body .plain { font-size: 13px; line-height: 21px; }
+
+/* White hairlines are the structure; grey ones are the inner dividers. */
+:root[data-family="kinetic"] .list-pane { border-right: 1px solid #fff; }
+:root[data-family="kinetic"] .list-pane, :root[data-family="kinetic"] .reader, :root[data-family="kinetic"] .settings-main { border-top: 1px solid #fff; }
+:root[data-family="kinetic"] .reader { border-right: 1px solid #fff; }
+:root[data-family="kinetic"] .reader-bar, :root[data-family="kinetic"] .tabs { border-bottom-color: #fff; }
+:root[data-family="kinetic"] .sidebar-foot { border-top-color: #fff; }
+:root[data-family="kinetic"] .dialog, :root[data-family="kinetic"] .menu, :root[data-family="kinetic"] .compose, :root[data-family="kinetic"] .mention-menu,
+:root[data-family="kinetic"] .update-card, :root[data-family="kinetic"] .card, :root[data-family="kinetic"] .search-pop, :root[data-family="kinetic"] .suggest,
+:root[data-family="kinetic"] .toast { border: 1px solid #fff; }
+:root[data-family="kinetic"] .compose-head { border-bottom: 1px solid #fff; }
+
+/* Buttons: square, uppercase, hard edges. Green is the one primary action. */
+:root[data-family="kinetic"] .btn { text-transform: uppercase; letter-spacing: 0.06em; font-size: 11px; font-weight: 600; border-color: #fff; }
+:root[data-family="kinetic"] .btn.filled, :root[data-family="kinetic"] .compose-fab { border: 1px solid #00ff85; text-transform: uppercase; letter-spacing: 0.06em; font-size: 12px; }
+:root[data-family="kinetic"] .btn:hover, :root[data-family="kinetic"] .btn.filled:hover { background: #fff; color: #000; border-color: #fff; transform: none; box-shadow: none; }
+:root[data-family="kinetic"] .btn.tonal { background: none; color: #fff; border-color: #fff; }
+:root[data-family="kinetic"] .btn.tonal:hover { background: #fff; color: #000; }
+:root[data-family="kinetic"] .btn.text { border-color: transparent; }
+:root[data-family="kinetic"] .btn.text:hover { background: #00ff85; color: #000; border-color: #00ff85; }
+:root[data-family="kinetic"] .compose-fab:hover { background: #fff; border-color: #fff; transform: none; box-shadow: none; }
+:root[data-family="kinetic"] .btn.ink { background: #000; color: #fff; border: 1px solid #fff; }
+:root[data-family="kinetic"] .btn:active:not(:disabled) { transform: none; background: #00ff85; color: #000; border-color: #00ff85; }
+
+/* Selection is inverse: white fill, black text. Green marks the active edge. */
+:root[data-family="kinetic"] .nav-item.active, :root[data-family="kinetic"] .nav-item.active .ms, :root[data-family="kinetic"] .nav-item.active .count { background: #fff; color: #000; }
+:root[data-family="kinetic"] .nav-item.active .ms, :root[data-family="kinetic"] .nav-item.active .count { background: none; }
+:root[data-family="kinetic"] .row.selected { background: var(--secondary-container); }
+:root[data-family="kinetic"] .row.selected::before { width: 3px; top: 0; bottom: 0; border-radius: 0; background: #00ff85; }
+:root[data-family="kinetic"] .row.unread::after { border-radius: 0; }
+:root[data-family="kinetic"] .row:hover .hover-actions { border: 1px solid #fff; }
+:root[data-family="kinetic"] .tab { border-color: #fff; text-transform: uppercase; letter-spacing: 0.06em; font-size: 10.5px; }
+:root[data-family="kinetic"] .tab.active { background: #fff; color: #000; }
+:root[data-family="kinetic"] .search { border: 1px solid #fff; background: #000; }
+:root[data-family="kinetic"] .search:focus-within { border-color: #00ff85; box-shadow: none; }
+:root[data-family="kinetic"] .input, :root[data-family="kinetic"] .setting select { border-color: #fff; background: #000; }
+:root[data-family="kinetic"] .input:focus, :root[data-family="kinetic"] .setting select:focus { border-color: #00ff85; box-shadow: none; }
+:root[data-family="kinetic"] .switch { border: 1px solid #fff; background: #000; }
+:root[data-family="kinetic"] .switch::after { background: #fff; box-shadow: none; }
+:root[data-family="kinetic"] .switch.on { background: #00ff85; border-color: #00ff85; }
+:root[data-family="kinetic"] .switch.on::after { background: #000; }
+:root[data-family="kinetic"] .toast.error { border-color: #ff4d6d; }
+:root[data-family="kinetic"] .avatar { color: #000; }
+:root[data-family="kinetic"] .chip { border-radius: 999px; }          /* tags and labels keep their pill (the GT rule) */
+
+/* ═══ Terminal: structure (green and white) ════════════════════════════════════════════════ */
+:root[data-family="terminal"] body { font-size: 18px; line-height: 20px; text-shadow: 0 0 5px var(--t-bloom); }   /* VT323 sets small; bump it to match Geist 14px */
+:root[data-family="terminal"] ::selection { background: var(--t-ink); color: #000; }
+:root[data-family="terminal"] :focus-visible { outline: 2px solid var(--t-bright); outline-offset: 2px; }
+:root[data-family="terminal"] h1, :root[data-family="terminal"] h2, :root[data-family="terminal"] h3 {
+  font-weight: 400; letter-spacing: 0; text-transform: uppercase; color: var(--accent);
+}
+:root[data-family="terminal"] b, :root[data-family="terminal"] strong, :root[data-family="terminal"] .msg-head .name { font-weight: 400; color: var(--accent); }
+:root[data-family="terminal"] .thread-title h1 { font-size: 30px; line-height: 30px; }
+:root[data-family="terminal"] .settings-main h2 { font-size: 30px; }
+:root[data-family="terminal"] .dialog h2 { font-size: 24px; }
+:root[data-family="terminal"] .wordmark, :root[data-family="terminal"] .list-toolbar .title, :root[data-family="terminal"] .update-title { font-size: 20px; font-weight: 400; letter-spacing: 0; text-transform: uppercase; }
+:root[data-family="terminal"] .eyebrow { font-size: 15px; letter-spacing: 0.1em; color: var(--accent); }
+:root[data-family="terminal"] .eyebrow::before { background: var(--accent); border-radius: 0; }
+:root[data-family="terminal"] .nav-item { font-size: 18px; font-weight: 400; }
+:root[data-family="terminal"] .nav-item .count, :root[data-family="terminal"] .row .count, :root[data-family="terminal"] .row .date, :root[data-family="terminal"] .msg-head .meta { font-size: 15px; }
+:root[data-family="terminal"] .row .from, :root[data-family="terminal"] .row .subject { font-size: 18px; font-weight: 400; }
+:root[data-family="terminal"] .row .snippet, :root[data-family="terminal"] .msg-head .email, :root[data-family="terminal"] .msg-head .to, :root[data-family="terminal"] .setting .txt small { font-size: 16px; }
+:root[data-family="terminal"] .row.unread .from, :root[data-family="terminal"] .row.unread .subject { font-weight: 400; color: var(--accent); }
+:root[data-family="terminal"] .chip { font-size: 15px; height: 20px; font-weight: 400; }
+:root[data-family="terminal"] .account-btn .sub { font-size: 15px; }
+:root[data-family="terminal"] .attachment .fname { font-size: 17px; font-weight: 400; }
+:root[data-family="terminal"] .attachment .fsize { font-size: 14px; }
+:root[data-family="terminal"] .row.selected .chip:not([style*="background"]) { color: #000; border-color: #000; }   /* the plain Attachment chip was green on green */
+:root[data-family="terminal"] .tab { font-size: 16px; font-weight: 400; height: 28px; border-color: var(--t-dim); text-transform: uppercase; }
+:root[data-family="terminal"] .field > label, :root[data-family="terminal"] .form-grid label { font-size: 15px; }
+:root[data-family="terminal"] .msg-body .plain { font-size: 18px; line-height: 20px; }
+:root[data-family="terminal"] .input, :root[data-family="terminal"] .setting select, :root[data-family="terminal"] .menu button, :root[data-family="terminal"] .menu label,
+:root[data-family="terminal"] .mention-menu button, :root[data-family="terminal"] .search-pop button, :root[data-family="terminal"] .field input { font-size: 18px; }
+:root[data-family="terminal"] .menu, :root[data-family="terminal"] .toast, :root[data-family="terminal"] .compose-head, :root[data-family="terminal"] .banner { font-size: 17px; font-weight: 400; }
+:root[data-family="terminal"] .menu button.on, :root[data-family="terminal"] .mention-menu button.on { background: var(--t-ink); color: #000; }
+
+/* CRT overlay: scanlines + vignette. Fixed, inert, above content but never interactive. */
+:root[data-family="terminal"] body::after {
+  content: ""; position: fixed; inset: 0; z-index: 200; pointer-events: none;
+  background:
+    repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.16) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse at center, transparent 62%, rgba(0, 0, 0, 0.4) 100%);
+}
+@media (prefers-reduced-motion: reduce) { :root[data-family="terminal"] body::after { display: none; } }
+@media print { :root[data-family="terminal"] body::after { display: none; } }
+
+/* Double-line borders on every panel; the sidebar edge is a double rule. */
+:root[data-family="terminal"] .sidebar { border-right: 3px double var(--t-ink); }
+:root[data-family="terminal"] .list-pane { border-right: 3px double var(--t-ink); border-top: 3px double var(--t-ink); }
+:root[data-family="terminal"] .reader, :root[data-family="terminal"] .settings-main { border-top: 3px double var(--t-ink); }
+:root[data-family="terminal"] .dialog, :root[data-family="terminal"] .menu, :root[data-family="terminal"] .compose, :root[data-family="terminal"] .mention-menu,
+:root[data-family="terminal"] .update-card, :root[data-family="terminal"] .card, :root[data-family="terminal"] .search-pop, :root[data-family="terminal"] .suggest,
+:root[data-family="terminal"] .toast { border: 3px double var(--t-ink); background: #000; }
+:root[data-family="terminal"] .compose { border-bottom: 0; }
+:root[data-family="terminal"] .toast.error { border-color: var(--t-bright); }
+:root[data-family="terminal"] .scrim { background: rgba(0, 0, 0, 0.82); }
+
+/* The compose title bar is a grey-green strip with black text, like a DOS dialog. */
+:root[data-family="terminal"] .compose-head { background: var(--t-ink); color: #000; text-shadow: none; text-transform: uppercase; }
+:root[data-family="terminal"] .compose-head .icon-btn { color: #000; }
+:root[data-family="terminal"] .compose-head .icon-btn:hover { background: #000; color: var(--t-bright); }
+
+/* Buttons: hard DOS shadow, uppercase; hover and press are inverse video. */
+:root[data-family="terminal"] .btn, :root[data-family="terminal"] .compose-fab {
+  text-transform: uppercase; letter-spacing: 0.04em; font-size: 16px; font-weight: 400; border: 1px solid var(--t-ink);
+  box-shadow: 3px 3px 0 var(--t-btn-shadow); text-shadow: none;
+}
+:root[data-family="terminal"] .compose-fab { background: var(--t-ink); color: #000; border-color: var(--t-bright); margin-right: 7px; font-size: 18px; }
+:root[data-family="terminal"] .btn.filled { background: var(--t-ink); color: #000; border-color: var(--t-bright); }
+:root[data-family="terminal"] .btn.tonal, :root[data-family="terminal"] .btn.ink { background: #000; color: var(--t-ink); border-color: var(--t-ink); }
+:root[data-family="terminal"] .btn.text { border-color: transparent; box-shadow: none; }
+:root[data-family="terminal"] .btn:hover, :root[data-family="terminal"] .btn.filled:hover, :root[data-family="terminal"] .compose-fab:hover {
+  background: var(--t-bright); color: #000; border-color: var(--t-bright); transform: none; box-shadow: 3px 3px 0 var(--t-btn-shadow);
+}
+:root[data-family="terminal"] .btn.text:hover { box-shadow: none; }
+:root[data-family="terminal"] .btn:active:not(:disabled), :root[data-family="terminal"] .compose-fab:active {
+  transform: translate(3px, 3px); box-shadow: none; background: var(--t-bright); color: #000;
+}
+:root[data-family="terminal"] .toast .btn { box-shadow: none; border: 0; color: var(--t-bright); }
+:root[data-family="terminal"] .toast .btn:hover { background: var(--t-ink); color: #000; }
+:root[data-family="terminal"] .toast, :root[data-family="terminal"] .toast .icon-btn { color: var(--t-bright); }
+
+/* Inverse video is the selection: the Norton Commander bar. */
+:root[data-family="terminal"] .nav-item.active { background: var(--t-ink); color: #000; text-shadow: none; }
+:root[data-family="terminal"] .nav-item.active .ms, :root[data-family="terminal"] .nav-item.active .count { color: #000; }
+:root[data-family="terminal"] .row.selected { background: var(--t-ink); text-shadow: none; }
+:root[data-family="terminal"] .row.selected .from, :root[data-family="terminal"] .row.selected .subject, :root[data-family="terminal"] .row.selected .snippet,
+:root[data-family="terminal"] .row.selected .date, :root[data-family="terminal"] .row.selected .count, :root[data-family="terminal"] .row.selected .star { color: #000; }
+:root[data-family="terminal"] .row.selected::before { display: none; }
+:root[data-family="terminal"] .row.unread::after { border-radius: 0; }
+:root[data-family="terminal"] .row:hover .hover-actions { border: 1px solid var(--t-ink); background: #000; }
+:root[data-family="terminal"] .tab.active { background: var(--t-ink); border-color: var(--t-ink); color: #000; text-shadow: none; font-weight: 400; }
+:root[data-family="terminal"] .search { background: #000; border: 1px solid var(--t-ink); }
+:root[data-family="terminal"] .search:focus-within { border-color: var(--t-bright); box-shadow: none; }
+:root[data-family="terminal"] .input, :root[data-family="terminal"] .setting select { background: #000; border-color: var(--t-ink); }
+:root[data-family="terminal"] .input:focus, :root[data-family="terminal"] .setting select:focus { border-color: var(--t-bright); box-shadow: none; }
+:root[data-family="terminal"] .switch { border: 1px solid var(--t-ink); background: #000; }
+:root[data-family="terminal"] .switch::after { background: var(--t-ink); box-shadow: none; }
+:root[data-family="terminal"] .switch.on { background: var(--t-ink); }
+:root[data-family="terminal"] .switch.on::after { background: #000; }
+:root[data-family="terminal"] .spinner { border-radius: 0; border-style: dashed; }
+:root[data-family="terminal"] .avatar { color: #000; text-shadow: none; }
+:root[data-family="terminal"] .compose-fab .ms, :root[data-family="terminal"] .btn.filled .ms { text-shadow: none; }
+
+/* No rounded anything. Avatars, buttons, switches and menus all go square. */
+:root[data-family="kinetic"] :is(.btn, .compose-fab, .icon-btn, .tab, .search, .avatar, .menu, .dialog, .compose, .card, .toast, .update-card, .input, .setting select, .list-pane, .reader, .settings-main,
+  .row .check, .row.unread::after, .hover-actions, .nav-item, .account-btn, .mention-menu, .search-pop, .suggest, .update-progress, .switch, .switch::after, .banner, .label-dot, .skeleton i, .scrim, .attachment),
+:root[data-family="terminal"] :is(.btn, .compose-fab, .icon-btn, .tab, .chip, .search, .avatar, .menu, .dialog, .compose, .card, .toast, .update-card, .input, .setting select, .list-pane, .reader, .settings-main,
+  .row .check, .row.unread::after, .hover-actions, .nav-item, .account-btn, .mention-menu, .search-pop, .suggest, .update-progress, .switch, .switch::after, .banner, .label-dot, .skeleton i, .scrim,
+  .msg-body iframe, .editor .tiptap a.mention, .attachment) { border-radius: 0 !important; }   /* several of these are set by compound selectors such as .app.no-reader .list-pane */
+:root[data-family="kinetic"] .msg-body iframe, :root[data-family="kinetic"] .editor .tiptap a.mention { border-radius: 0; }
+
+/* ═══ Motion ═══════════════════════════════════════════════════════════════════════════════
+   Kinetic: precise wipes, no springs, no blur. Terminal: a line printing to a CRT, stepped reveals,
+   a hard blinking cursor, an inverse flash on confirmation. Both keep the existing animation names
+   (pane-in, pop-in, ...) and are retargeted here, so no component changes. */
+@keyframes k-wipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes k-wipe-down { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes t-print { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes t-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes t-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+@keyframes t-invert { 0%, 40% { filter: invert(1); } 100% { filter: invert(0); } }
+
+:root[data-family="kinetic"] .reader { animation: k-wipe 320ms var(--ease) both; }
+:root[data-family="kinetic"] :is(.menu, .search-pop, .suggest, .mention-menu) { animation: k-wipe-down 180ms var(--ease) both; }
+:root[data-family="kinetic"] .dialog { animation: k-wipe 280ms var(--ease) both; }
+:root[data-family="kinetic"] :is(.compose, .toast, .update-card) { animation: k-wipe 280ms var(--ease) both; }
+:root[data-family="kinetic"] .settings-main > * { animation: k-wipe 280ms var(--ease) both; }
+:root[data-family="kinetic"] .settings-main > :nth-child(2) { animation-delay: 45ms; }
+:root[data-family="kinetic"] .settings-main > :nth-child(3) { animation-delay: 90ms; }
+:root[data-family="kinetic"] .settings-main > :nth-child(n+4) { animation-delay: 135ms; }
+:root[data-family="kinetic"] :is(.msg-body, .attachments, .summary-card, .smart-chips, .help-write) { animation: k-wipe 240ms var(--ease) both; }
+:root[data-family="kinetic"] .spinner { border-radius: 0; animation-timing-function: steps(8, end); }
+
+:root[data-family="terminal"] .reader { animation: t-print 320ms steps(12, end) both; }
+:root[data-family="terminal"] :is(.menu, .search-pop, .suggest, .mention-menu, .dialog, .compose, .toast, .update-card) { animation: t-print 180ms steps(8, end) both; }
+:root[data-family="terminal"] .scrim, :root[data-family="terminal"] .lightbox, :root[data-family="terminal"] .settings { animation: t-fade 60ms linear both; }
+:root[data-family="terminal"] .settings-main > * { animation: t-print 240ms steps(10, end) both; }
+:root[data-family="terminal"] .settings-main > :nth-child(2) { animation-delay: 40ms; }
+:root[data-family="terminal"] .settings-main > :nth-child(3) { animation-delay: 80ms; }
+:root[data-family="terminal"] .settings-main > :nth-child(n+4) { animation-delay: 120ms; }
+:root[data-family="terminal"] :is(.msg-body, .attachments, .summary-card, .smart-chips, .help-write) { animation: t-print 240ms steps(10, end) both; }
+/* The unread marker is the DOS block cursor: a ~1Hz hard blink. */
+:root[data-family="terminal"] .row.unread::after { animation: t-blink 1060ms steps(1, end) infinite; width: 7px; height: 12px; top: 20px; }
+:root[data-family="terminal"] .btn[aria-busy="true"] .spinner { animation-duration: 0.9s; animation-timing-function: steps(8, end); }
+:root[data-family="terminal"] .btn:active:not(:disabled) { animation: t-invert 120ms steps(2, end) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-family="terminal"] .row.unread::after { animation: none; }
+}

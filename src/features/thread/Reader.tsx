@@ -306,7 +306,9 @@ export function Reader() {
         <IconButton icon="more_vert" label="More" onClick={(e) => setMenu({ el: e.currentTarget as HTMLElement, mode: "more" })} />
         <div className="spacer" />
         {hasProvider("summary") && detail && (
-          <button className="btn tonal" onClick={() => void summarize()}><Icon name="auto_awesome" /> Summarize</button>
+          <button className="btn tonal" disabled={summary?.loading} aria-busy={summary?.loading || undefined} onClick={() => void summarize()}>
+            {summary?.loading ? <Spinner /> : <Icon name="auto_awesome" />} {summary?.loading ? "Summarizing…" : summary ? "Summarize again" : "Summarize"}
+          </button>
         )}
         <IconButton icon="chevron_left" label="Newer (k)" onClick={() => moveSel(-1)} />
         <IconButton icon="chevron_right" label="Older (j)" onClick={() => moveSel(1)} />

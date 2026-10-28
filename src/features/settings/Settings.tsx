@@ -73,7 +73,7 @@ function General() {
     <>
       <h2>General</h2>
       <p className="lead">How Chaucer looks and behaves.</p>
-      <Choice k="theme" title="Theme" def="system" options={[["system", "System default"], ["light", "Light"], ["dark", "Dark"]]} />
+      <Choice k="theme" title="Theme" def="system" options={[["system", "System default"], ["light", "Light"], ["dark", "Dark"], ["kinetic", "Kinetic"], ["terminal-green", "Terminal Green"], ["terminal-white", "Terminal White"]]} />
       <Choice k="density" title="Conversation list density" def="default" options={[["default", "Default"], ["comfortable", "Comfortable"], ["compact", "Compact"]]} />
       <Choice k="defaultReply" title="Default reply action" def="reply" options={[["reply", "Reply"], ["replyAll", "Reply all"]]} />
       <Choice k="autoAdvance" title="Auto-advance" hint="Show this after you archive or delete a conversation" def="newer"

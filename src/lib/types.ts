@@ -146,7 +146,7 @@ export interface Vacation {
 }
 
 export interface Prefs {
-  theme?: "system" | "light" | "dark";
+  theme?: "system" | "light" | "dark" | "kinetic" | "terminal-green" | "terminal-white";
   density?: "default" | "comfortable" | "compact";
   conversationView?: boolean;
   externalImages?: "ask" | "always";

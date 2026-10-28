@@ -16,6 +16,7 @@ import { on } from "./lib/ipc";
 import { refreshMail, usePrefs, useStatus } from "./lib/queries";
 import { clampWidth, usePanes } from "./lib/panes";
 import { useUi } from "./lib/store";
+import { themeFamily } from "./lib/theme";
 
 function ShortcutsHelp() {
   const { shortcutsHelp, setShortcutsHelp } = useUi();
@@ -67,6 +68,9 @@ export default function App() {
     const root = document.documentElement;
     if (prefs.theme && prefs.theme !== "system") root.dataset.theme = prefs.theme;
     else delete root.dataset.theme;
+    const family = themeFamily(prefs.theme);
+    if (family) root.dataset.family = family;
+    else delete root.dataset.family;
     root.dataset.density = prefs.density ?? "default";
   }, [prefs.theme, prefs.density]);
 

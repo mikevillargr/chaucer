@@ -10,6 +10,7 @@ const KINDS: { id: Provider["kind"]; name: string; model: string; keyHint: strin
   { id: "anthropic", name: "Anthropic", model: "claude-sonnet-5-5", keyHint: "sk-ant-…" },
   { id: "openai", name: "OpenAI", model: "gpt-5.1", keyHint: "sk-…" },
   { id: "gemini", name: "Google Gemini", model: "gemini-3-flash", keyHint: "AIza…" },
+  { id: "moonshot", name: "Moonshot (Kimi)", model: "kimi-k2.6", keyHint: "sk-… (Kimi Code keys: use model kimi-for-coding)" },
   { id: "openai_compatible", name: "OpenAI-compatible (Ollama, OpenRouter, …)", model: "llama3.3", keyHint: "Optional" },
 ];
 

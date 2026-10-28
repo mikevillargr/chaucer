@@ -119,7 +119,7 @@ export interface Draft {
 export interface Provider {
   id: string;
   name: string;
-  kind: "anthropic" | "openai" | "gemini" | "openai_compatible";
+  kind: "anthropic" | "openai" | "gemini" | "moonshot" | "openai_compatible";
   baseUrl?: string | null;
   model: string;
 }

@@ -11,7 +11,7 @@ use serde_json::{json, Value};
 pub struct Provider {
     pub id: String,
     pub name: String,
-    /// "anthropic" | "openai" | "gemini" | "openai_compatible"
+    /// "anthropic" | "openai" | "gemini" | "moonshot" | "openai_compatible"
     pub kind: String,
     #[serde(default)]
     pub base_url: Option<String>,
@@ -47,16 +47,27 @@ pub async fn complete(http: &reqwest::Client, p: &Provider, key: Option<&str>, s
                 Some(text)
             },
         ),
-        "openai" | "openai_compatible" => {
+        "openai" | "moonshot" | "openai_compatible" => {
             let base = match p.kind.as_str() {
                 "openai" => "https://api.openai.com/v1".to_string(),
+                // Blank base URL: Kimi Code keys (sk-kimi-…) only work on the coding endpoint, platform
+                // keys on the international API (as in Poe).
+                "moonshot" => p.base_url.clone().filter(|b| !b.is_empty()).unwrap_or_else(|| {
+                    if key.is_some_and(|k| k.starts_with("sk-kimi-")) { "https://api.kimi.com/coding/v1" } else { "https://api.moonshot.ai/v1" }.to_string()
+                }),
                 _ => p.base_url.clone().filter(|b| !b.is_empty()).ok_or_else(|| Error::other("Base URL is required"))?,
             };
-            let mut req = http.post(format!("{}/chat/completions", base.trim_end_matches('/'))).json(&json!({
+            let mut body = json!({
                 "model": p.model,
                 "messages": [{ "role": "system", "content": system }, { "role": "user", "content": user }]
-            }));
-            if p.kind == "openai" {
+            });
+            // Kimi models always reason; the thinking tokens count against the limit, so a small
+            // one leaves `content` empty. Poe floors it at 16000 and never sends a temperature.
+            if p.kind == "moonshot" || p.model.starts_with("kimi-") {
+                body["max_completion_tokens"] = json!(16000);
+            }
+            let mut req = http.post(format!("{}/chat/completions", base.trim_end_matches('/'))).json(&body);
+            if p.kind == "openai" || p.kind == "moonshot" {
                 req = req.bearer_auth(need_key()?);
             } else if let Some(k) = key.filter(|k| !k.is_empty()) {
                 req = req.bearer_auth(k);
@@ -170,5 +181,22 @@ mod tests {
         let msg = |t: &str| Message { from: Addr { name: "Ann".into(), email: "a@x".into() }, text: Some(t.repeat(50)), ..Default::default() };
         let s = thread_text("Plans", &[msg("old "), msg("new ")], 400);
         assert!(s.contains("new") && !s.contains("old"));
+    }
+}
+
+#[cfg(test)]
+mod live {
+    use super::*;
+
+    /// Live smoke test against Kimi. Run with `KIMI_TEST_KEY=… KIMI_TEST_MODEL=… cargo test live_kimi -- --ignored`.
+    #[tokio::test]
+    #[ignore]
+    async fn live_kimi() {
+        let key = std::env::var("KIMI_TEST_KEY").expect("KIMI_TEST_KEY");
+        let model = std::env::var("KIMI_TEST_MODEL").unwrap_or_else(|_| "kimi-for-coding".into());
+        let p = Provider { id: "t".into(), name: "Kimi".into(), kind: "moonshot".into(), base_url: None, model };
+        let out = complete(&reqwest::Client::new(), &p, Some(&key), "Reply with one word.", "Say ok").await.unwrap();
+        println!("REPLY: {out}");
+        assert!(!out.is_empty());
     }
 }

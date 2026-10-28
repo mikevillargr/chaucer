@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { readableOn } from "../../lib/color";
 import { Avatar, Icon, IconButton, Spinner } from "../../components/ui";
 import { shortDate, sendersLine } from "../../lib/format";
 import { CATEGORIES, chipLabels, labelName } from "../../lib/labels";
@@ -48,7 +49,7 @@ function Row({ t, me, selected, checked, onOpen, onCheck }: {
           <div className="labels">
             {t.hasAttachments && <span className="chip"><Icon name="attach_file" /> Attachment</span>}
             {chips.map((l) => (
-              <span key={l.id} className="chip" style={{ background: l.colorBg ?? undefined, color: l.colorText ?? undefined }}>
+              <span key={l.id} className="chip" style={l.colorBg ? { background: l.colorBg, color: readableOn(l.colorBg, l.colorText) } : undefined}>
                 {l.name.split("/").pop()}
               </span>
             ))}

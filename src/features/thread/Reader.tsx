@@ -1,4 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
+import { readableOn } from "../../lib/color";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Avatar, confirmDialog, Icon, IconButton, Menu, Spinner } from "../../components/ui";
 import { displayName, formatAddr, fullDate, parseMailto, shortDate } from "../../lib/format";
@@ -10,7 +11,8 @@ import type { Message, ThreadDetail, ThreadRef } from "../../lib/types";
 import { useStartCompose } from "../compose/startCompose";
 import { LabelMenu } from "../mailbox/LabelMenu";
 import { Attachments } from "./Attachments";
-import { EmailFrame } from "./EmailFrame";
+import { EmailFrame, type Appearance } from "./EmailFrame";
+import { useResolvedTheme } from "../../lib/theme";
 import { useConfirmed } from "./useConfirmed";
 
 /** Moves selection after the open thread leaves the list ("Auto-advance" setting). */
@@ -34,7 +36,9 @@ function MessageView({ detail, m, expanded, onToggle, me, isLast }: {
   const toast = useUi((s) => s.toast);
   const [allowImages, setAllowImages] = useState(prefs.externalImages === "always");
   const [showQuoted, setShowQuoted] = useState(false);
-  const [info, setInfo] = useState({ blocked: 0, hasQuote: false });
+  const theme = useResolvedTheme();
+  const [original, setOriginal] = useState(false);
+  const [info, setInfo] = useState<{ blocked: number; hasQuote: boolean; designed: boolean; appearance: Appearance }>({ blocked: 0, hasQuote: false, designed: false, appearance: "light" });
   const [details, setDetails] = useState(false);
   const [menu, setMenu] = useState<HTMLElement | null>(null);
   const accountId = detail.summary.accountId;
@@ -128,6 +132,18 @@ function MessageView({ detail, m, expanded, onToggle, me, isLast }: {
         </div>
       </div>
       <div className="msg-body">
+        {theme === "dark" && m.html && (
+          <div className="appearance-toggle">
+            <button
+              className="btn text"
+              onClick={() => setOriginal(info.appearance === "dark")}
+              title={info.appearance === "dark" ? "Show the sender's own colours" : "Show this email in dark colours"}
+            >
+              <Icon name={info.appearance === "dark" ? "light_mode" : "dark_mode"} />
+              {info.appearance === "dark" ? "Original colours" : "Dark"}
+            </button>
+          </div>
+        )}
         {info.blocked > 0 && !allowImages && (
           <div className="images-blocked">
             <Icon name="hide_image" /> Images are hidden.
@@ -135,7 +151,7 @@ function MessageView({ detail, m, expanded, onToggle, me, isLast }: {
           </div>
         )}
         {m.html ? (
-          <EmailFrame html={m.html} allowRemote={allowImages} showQuoted={showQuoted} onLink={onLink} onInfo={setInfo} />
+          <EmailFrame html={m.html} allowRemote={allowImages} showQuoted={showQuoted} theme={theme} original={original} onLink={onLink} onInfo={setInfo} />
         ) : (
           <div className="plain">{m.text ?? m.snippet}</div>
         )}
@@ -305,7 +321,7 @@ export function Reader() {
                 <h1>{summaryRow.subject}</h1>
                 <div className="chips">
                   {chipLabels(summaryRow.labelIds, labels).map((l) => (
-                    <span key={l.id} className="chip" style={{ background: l.colorBg ?? undefined, color: l.colorText ?? undefined }}>
+                    <span key={l.id} className="chip" style={l.colorBg ? { background: l.colorBg, color: readableOn(l.colorBg, l.colorText) } : undefined}>
                       {l.name}
                       <span className="ms" style={{ fontSize: 14 }} role="button" aria-label={`Remove ${l.name}`}
                         onClick={() => void setLabels([ref], [], [l.id])}>close</span>

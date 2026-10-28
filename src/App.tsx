@@ -1,5 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Fragment, useEffect } from "react";
+import { Resizer } from "./components/Resizer";
 import { ConfirmHost, Dialog, Spinner, Toasts } from "./components/ui";
 import { ComposeDock } from "./features/compose/Compose";
 import { useStartCompose } from "./features/compose/startCompose";
@@ -13,6 +14,7 @@ import { CHECK_INTERVAL_MS, useUpdates } from "./features/updates/updates";
 import { parseMailto } from "./lib/format";
 import { on } from "./lib/ipc";
 import { refreshMail, usePrefs, useStatus } from "./lib/queries";
+import { clampWidth, usePanes } from "./lib/panes";
 import { useUi } from "./lib/store";
 
 function ShortcutsHelp() {
@@ -29,12 +31,28 @@ function ShortcutsHelp() {
 
 function Mail() {
   const selected = useUi((s) => s.selected);
+  const { widths, resizing, setWidth } = usePanes();
   useShortcuts();
+
+  // Keep the reading pane usable when the window gets narrower.
+  useEffect(() => {
+    const fit = () => {
+      const list = clampWidth("list", widths.list, widths.sidebar, window.innerWidth);
+      if (list !== widths.list) setWidth("list", list);
+    };
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, [widths, setWidth]);
+
+  const columns = selected ? `${widths.sidebar}px ${widths.list}px minmax(0, 1fr)` : `${widths.sidebar}px minmax(0, 1fr)`;
   return (
-    <div className={`app ${selected ? "" : "no-reader"}`}>
+    <div className={`app ${selected ? "" : "no-reader"} ${resizing ? "resizing" : ""}`} style={{ gridTemplateColumns: columns }}>
       <Sidebar />
       <ThreadList />
       {selected && <Reader />}
+      <Resizer pane="sidebar" label="Resize sidebar" at={widths.sidebar} />
+      {selected && <Resizer pane="list" label="Resize conversation list" at={widths.sidebar + widths.list} />}
     </div>
   );
 }

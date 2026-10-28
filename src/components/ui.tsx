@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { avatarBackground } from "../lib/color";
 import { avatarHue, initials } from "../lib/format";
 import { useUi } from "../lib/store";
 import type { Addr } from "../lib/types";
@@ -20,7 +21,7 @@ export function IconButton({ icon, label, onClick, fill, small, disabled, classN
 export function Avatar({ addr, small }: { addr: Addr; small?: boolean }) {
   const hue = avatarHue(addr.email);
   return (
-    <div className={`avatar ${small ? "sm" : ""}`} style={{ background: `hsl(${hue} 32% 40%)` }} aria-hidden>
+    <div className={`avatar ${small ? "sm" : ""}`} style={{ background: avatarBackground(hue) }} aria-hidden>
       {initials(addr)}
     </div>
   );

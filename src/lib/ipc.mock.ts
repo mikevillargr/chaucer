@@ -93,6 +93,13 @@ seed(9, work, { name: "Mike Villar", email: work.email }, "Proposal: Q1 SEO road
 seed(10, work, people[1], "Swain itinerary review", "<p>Here's the revised itinerary copy for review.</p>",
   96, ["INBOX", "CATEGORY_PERSONAL", `${work.id}-clients`]);
 
+seed(11, work, people[0], "Notes from Tuesday",
+  "<div style=\"color:#222222\">Hi Mike,</div><p><span style=\"color:#333\">Quick recap of Tuesday</span> — <font color=\"#1a1a1a\">the deck is approved</font> and <span style=\"color:#b91c1c\">the launch date moves to Nov 12</span>.</p><p style=\"background-color:#ffffff\">Thanks!</p>",
+  6, ["INBOX", "CATEGORY_PERSONAL"]);
+seed(12, work, { name: "Growth Weekly", email: "news@growthweekly.example" }, "This week in search: 5 changes to watch",
+  "<table width=\"100%\" bgcolor=\"#00233b\" style=\"color:#ffffff\"><tr><td style=\"padding:24px;font-size:22px\">Growth Weekly</td></tr></table><table width=\"100%\" bgcolor=\"#fff6ec\"><tr><td style=\"padding:16px;color:#0a1b28\">1. AI Overviews expand to more queries.<br>2. Core update rollout finished.</td></tr></table>",
+  10, ["INBOX", "CATEGORY_UPDATES"], { listUnsubscribe: "<https://growthweekly.example/u>", listUnsubscribePost: "List-Unsubscribe=One-Click" });
+
 let prefs: Prefs = {};
 const providers: ProviderInfo[] = [];
 const recent: string[] = ["from:ana", "has:attachment invoice"];

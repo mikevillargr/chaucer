@@ -73,7 +73,7 @@ export function Sidebar() {
               className={`account-btn ${view.accountId === null ? "active" : ""}`}
               onClick={() => setView({ accountId: null, label: "INBOX", category: "CATEGORY_PERSONAL" })}
             >
-              <div className="avatar sm" style={{ background: "var(--primary)" }}><Icon name="all_inbox" /></div>
+              <div className="avatar sm" style={{ background: "var(--primary)", color: "var(--on-primary)" }}><Icon name="all_inbox" /></div>
               <div className="who"><div>All inboxes</div></div>
             </button>
             {accounts.map((a) => (

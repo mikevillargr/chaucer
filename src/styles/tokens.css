@@ -15,6 +15,10 @@
   --on-accent: #040c14;
   --accent-soft: rgba(245, 141, 73, 0.14);
   --accent-glow: 0 10px 28px -10px rgba(245, 141, 73, 0.7);
+  /* Strong selection (active filter chip): navy on light, azure on dark. Never orange,
+     which is reserved for the one primary action per view. */
+  --selected-strong: #00233b;
+  --on-selected-strong: #ffffff;
 
   /* Structure (names kept from the GM3 mapping the components use) */
   --primary: #00233b;         /* links, active tab text, spinners */
@@ -57,6 +61,8 @@
     --primary-container: #0b2131;
     --on-primary-container: #e9eef3;
     --secondary-container: rgba(98, 215, 222, 0.12);
+    --selected-strong: #62d7de;
+    --on-selected-strong: #040c14;
     --on-secondary-container: #bff1f4;
     --error: #ffb59a;
     --error-container: #4a1d0c;
@@ -90,6 +96,8 @@
   --primary-container: #0b2131;
   --on-primary-container: #e9eef3;
   --secondary-container: rgba(98, 215, 222, 0.12);
+  --selected-strong: #62d7de;
+  --on-selected-strong: #040c14;
   --on-secondary-container: #bff1f4;
   --error: #ffb59a;
   --error-container: #4a1d0c;
@@ -121,6 +129,8 @@
   --font-display: "Sora", "Geist", -apple-system, system-ui, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 140ms;
+  --dur: 220ms;
   --r-chip: 6px;
   --r-card: 22px;
   --r-window: 18px;

@@ -506,6 +506,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "chaucer"
+version = "0.1.0"
+dependencies = [
+ "base64 0.23.1",
+ "chrono",
+ "encoding_rs",
+ "futures",
+ "html-escape",
+ "keyring",
+ "log",
+ "mail-builder",
+ "rand",
+ "reqwest",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "sha2 0.11.1",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-deep-link",
+ "tauri-plugin-dialog",
+ "tauri-plugin-notification",
+ "tauri-plugin-opener",
+ "tauri-plugin-single-instance",
+ "tempfile",
+ "thiserror 2.0.21",
+ "tokio",
+ "url",
+]
+
+[[package]]
 name = "chrono"
 version = "0.4.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2241,37 +2272,6 @@ dependencies = [
  "security-framework 2.11.1",
  "security-framework 3.7.0",
  "zeroize",
-]
-
-[[package]]
-name = "letterbox"
-version = "0.1.0"
-dependencies = [
- "base64 0.23.1",
- "chrono",
- "encoding_rs",
- "futures",
- "html-escape",
- "keyring",
- "log",
- "mail-builder",
- "rand",
- "reqwest",
- "rusqlite",
- "serde",
- "serde_json",
- "sha2 0.11.1",
- "tauri",
- "tauri-build",
- "tauri-plugin-deep-link",
- "tauri-plugin-dialog",
- "tauri-plugin-notification",
- "tauri-plugin-opener",
- "tauri-plugin-single-instance",
- "tempfile",
- "thiserror 2.0.21",
- "tokio",
- "url",
 ]
 
 [[package]]

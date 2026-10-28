@@ -1,12 +1,12 @@
-name: gmail-desktop
+name: chaucer
 
 services:
   dev:
     build:
       context: .
       dockerfile: docker/dev.Dockerfile
-    image: gmail-desktop-dev
-    container_name: gmail-desktop-dev
+    image: chaucer-dev
+    container_name: chaucer-dev
     user: "1000:1000"
     working_dir: /app
     volumes:
@@ -20,8 +20,8 @@ services:
     build:
       context: .
       dockerfile: docker/apkeep.Dockerfile
-    image: gmail-desktop-apkeep
-    container_name: gmail-desktop-apkeep
+    image: chaucer-apkeep
+    container_name: chaucer-apkeep
     user: "1000:1000"
     working_dir: /work
     volumes:

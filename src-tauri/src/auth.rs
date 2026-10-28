@@ -123,9 +123,9 @@ async fn wait_for_code(listener: &TcpListener, state: &str) -> Result<String> {
             _ => continue,
         };
         let body = if ok {
-            "<h2>Signed in to Letterbox.</h2><p>You can close this tab and return to the app.</p>"
+            "<h2>Signed in to Chaucer.</h2><p>You can close this tab and return to the app.</p>"
         } else {
-            "<h2>Sign-in didn't complete.</h2><p>Return to Letterbox and try again.</p>"
+            "<h2>Sign-in didn't complete.</h2><p>Return to Chaucer and try again.</p>"
         };
         let page = format!(
             "<!doctype html><meta charset=utf-8><body style=\"font-family:-apple-system,sans-serif;padding:48px\">{body}</body>"

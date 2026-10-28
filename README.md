@@ -1,20 +1,20 @@
-# Letterbox
+# Chaucer
 
 A Mac desktop client for Gmail, modelled feature-for-feature on the Android Gmail app
 (v2026.10.19) and built on the **public Gmail API**. Tauri v2 (Rust) + React + TypeScript.
 
-Not affiliated with Google. No Google code or assets are shipped: the APK was only used as a
+Not affiliated with Google. App icon artwork generated with Nano Banana 2.1 (via fal) and shaped with `scripts/spec/make-icon.sh`. No Google code or assets are shipped: the APK was only used as a
 spec — see [docs/feature-inventory.md](docs/feature-inventory.md) (also the test checklist) and
 [docs/design-tokens.md](docs/design-tokens.md).
 
 ## Install (unsigned build)
 
-1. Download `Letterbox_*.dmg` from the latest GitHub Actions run (**Actions → Build macOS →
-   Letterbox-dmg**) or a draft release.
-2. Open the dmg and drag Letterbox to Applications.
+1. Download `Chaucer_*.dmg` from the latest GitHub Actions run (**Actions → Build macOS →
+   Chaucer-dmg**) or a draft release.
+2. Open the dmg and drag Chaucer to Applications.
 3. First launch: macOS blocks apps without an Apple Developer ID. Open **System Settings → Privacy &
-   Security**, click **Open Anyway** next to Letterbox, and confirm — or run
-   `xattr -dr com.apple.quarantine /Applications/Letterbox.app` once.
+   Security**, click **Open Anyway** next to Chaucer, and confirm — or run
+   `xattr -dr com.apple.quarantine /Applications/Chaucer.app` once.
 4. Follow [docs/google-setup.md](docs/google-setup.md) to connect your Google Cloud OAuth client.
 
 ## Layout

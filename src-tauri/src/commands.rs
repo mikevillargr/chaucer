@@ -302,7 +302,7 @@ pub async fn save_attachment(app: S<'_>, account_id: String, message_id: String,
 pub async fn open_attachment(handle: AppHandle, app: S<'_>, account_id: String, message_id: String, attachment_id: String, filename: String) -> Result<()> {
     use tauri_plugin_opener::OpenerExt;
     let data = app.gmail(&account_id).await?.attachment(&message_id, &attachment_id).await?;
-    let dir = std::env::temp_dir().join("letterbox-attachments").join(&message_id);
+    let dir = std::env::temp_dir().join("chaucer-attachments").join(&message_id);
     std::fs::create_dir_all(&dir)?;
     let safe: String = filename.chars().map(|c| if c == '/' || c == '\\' || c == ':' { '_' } else { c }).collect();
     let path = dir.join(if safe.is_empty() { "attachment".into() } else { safe });

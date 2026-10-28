@@ -20,7 +20,7 @@ let activeCompose: string | null = null;
 function extractInlineImages(html: string): { html: string; inline: DraftAttachment[] } {
   const inline: DraftAttachment[] = [];
   const out = html.replace(/<img([^>]*?)src="data:([^;"]+);base64,([^"]+)"([^>]*)>/g, (_m, pre, mime, data, post) => {
-    const cid = `img${inline.length + 1}.${Date.now().toString(36)}@letterbox`;
+    const cid = `img${inline.length + 1}.${Date.now().toString(36)}@chaucer`;
     inline.push({ kind: "inline", data, mimeType: mime, filename: `image${inline.length + 1}.${mime.split("/")[1] ?? "png"}`, contentId: cid });
     return `<img${pre}src="cid:${cid}"${post}>`;
   });

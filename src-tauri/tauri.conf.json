@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Letterbox",
+  "productName": "Chaucer",
   "version": "0.1.0",
-  "identifier": "com.mikevillargr.letterbox",
+  "identifier": "com.mikevillargr.chaucer",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:3010",
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Letterbox",
+        "title": "Chaucer",
         "width": 1280,
         "height": 820,
         "minWidth": 900,

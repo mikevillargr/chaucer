@@ -70,7 +70,7 @@ function General() {
   return (
     <>
       <h2>General</h2>
-      <p className="lead">How Letterbox looks and behaves.</p>
+      <p className="lead">How Chaucer looks and behaves.</p>
       <Choice k="theme" title="Theme" def="system" options={[["system", "System default"], ["light", "Light"], ["dark", "Dark"]]} />
       <Choice k="density" title="Conversation list density" def="default" options={[["default", "Default"], ["comfortable", "Comfortable"], ["compact", "Compact"]]} />
       <Choice k="defaultReply" title="Default reply action" def="reply" options={[["reply", "Reply"], ["replyAll", "Reply all"]]} />
@@ -136,7 +136,7 @@ function Accounts() {
   return (
     <>
       <h2>Accounts</h2>
-      <p className="lead">Google accounts signed in to Letterbox. Sign-in happens in your browser.</p>
+      <p className="lead">Google accounts signed in to Chaucer. Sign-in happens in your browser.</p>
       {accounts.map((a) => (
         <div className="setting" key={a.id}>
           <Avatar addr={{ name: a.displayName ?? "", email: a.email }} />
@@ -323,7 +323,7 @@ function Notifications() {
   return (
     <>
       <h2>Notifications</h2>
-      <p className="lead">Letterbox notifies you about new mail in your Inbox while it's running. macOS controls sounds and banners in System Settings → Notifications.</p>
+      <p className="lead">Chaucer notifies you about new mail in your Inbox while it's running. macOS controls sounds and banners in System Settings → Notifications.</p>
       {accounts.map((a) => (
         <Setting key={a.id} title={a.email}>
           <Switch label={`Notifications for ${a.email}`} on={map[a.id] ?? true} onChange={(v) => set.mutate({ notifyAccounts: { ...map, [a.id]: v } })} />

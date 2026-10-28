@@ -63,9 +63,14 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let dir = app.path().app_data_dir()?;
+            // One-time move of data saved under the app's previous name (Letterbox).
+            let legacy = dir.with_file_name("com.mikevillargr.letterbox");
+            if !dir.exists() && legacy.exists() {
+                let _ = std::fs::rename(&legacy, &dir);
+            }
             let state = Arc::new(App {
                 http: reqwest::Client::builder()
-                    .user_agent(concat!("Letterbox/", env!("CARGO_PKG_VERSION")))
+                    .user_agent(concat!("Chaucer/", env!("CARGO_PKG_VERSION")))
                     .timeout(std::time::Duration::from_secs(60))
                     .build()?,
                 cfg: config::Config::load(&dir)?,
@@ -131,5 +136,5 @@ pub fn run() {
             commands::help_write,
         ])
         .run(tauri::generate_context!())
-        .expect("error while running Letterbox");
+        .expect("error while running Chaucer");
 }

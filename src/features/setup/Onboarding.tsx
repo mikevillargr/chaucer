@@ -40,11 +40,11 @@ export function Onboarding({ hasClient }: { hasClient: boolean }) {
   return (
     <div className="onboard drag" data-tauri-drag-region>
       <div className="onboard-card">
-        <img className="app-mark" src="/icon.svg" alt="" />
+        <img className="app-mark" src="/icon.png" alt="" />
         {!hasClient ? (
           <>
-            <h1>Connect Letterbox to Google</h1>
-            <p className="muted">Letterbox talks to Gmail with your own Google Cloud OAuth client, so your mail never passes through anyone else's servers. One-time setup, about 5 minutes:</p>
+            <h1>Connect Chaucer to Google</h1>
+            <p className="muted">Chaucer talks to Gmail with your own Google Cloud OAuth client, so your mail never passes through anyone else's servers. One-time setup, about 5 minutes:</p>
             <ol>
               <li>In Google Cloud, create a project and enable the <b>Gmail API</b> and <b>People API</b>.</li>
               <li>Configure the OAuth consent screen (External), add yourself, then <b>publish it</b> so sign-ins don't expire weekly.</li>
@@ -64,7 +64,7 @@ export function Onboarding({ hasClient }: { hasClient: boolean }) {
         ) : (
           <>
             <h1>Sign in to Gmail</h1>
-            <p className="muted">Your browser will open to Google's sign-in page. Because the app is unverified, Google shows a warning the first time — choose <b>Advanced → Go to Letterbox</b>. You can add more accounts later in Settings.</p>
+            <p className="muted">Your browser will open to Google's sign-in page. Because the app is unverified, Google shows a warning the first time — choose <b>Advanced → Go to Chaucer</b>. You can add more accounts later in Settings.</p>
             <button className="btn filled" onClick={() => void signIn()} disabled={busy}>
               {busy ? <Spinner /> : <Icon name="login" />} {busy ? "Waiting for your browser…" : "Sign in with Google"}
             </button>

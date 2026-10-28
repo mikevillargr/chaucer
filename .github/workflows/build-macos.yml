@@ -49,10 +49,10 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create "${{ github.ref_name }}" --draft --title "Letterbox ${{ github.ref_name }}" src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
+        run: gh release create "${{ github.ref_name }}" --draft --title "Chaucer ${{ github.ref_name }}" src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Letterbox-dmg
+          name: Chaucer-dmg
           path: src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
           if-no-files-found: error

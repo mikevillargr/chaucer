@@ -8,6 +8,7 @@ use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
+use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
@@ -173,11 +174,11 @@ pub async fn revoke(http: &reqwest::Client, token: &str) {
 }
 
 /// Hands out valid access tokens per account, refreshing them when they expire.
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Tokens {
     // Expiry is wall-clock time: `Instant` stops while a Mac sleeps, so a token cached before
     // an overnight sleep would look valid on wake and Gmail would answer 401.
-    cache: Mutex<HashMap<String, (String, SystemTime)>>,
+    cache: Arc<Mutex<HashMap<String, (String, SystemTime)>>>,
 }
 
 impl Tokens {

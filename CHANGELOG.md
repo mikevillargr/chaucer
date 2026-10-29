@@ -5,6 +5,15 @@ All notable changes to Chaucer. Versions follow [Semantic Versioning](https://se
 **MINOR** for new features, **PATCH** for fixes. Each GitHub release uses its section below as
 its release notes (see [docs/RELEASING.md](https://github.com/mikevillargr/chaucer/blob/main/docs/RELEASING.md)).
 
+## [1.6.0] - 2026-10-29
+
+### Mail
+- **Trackpad swipe on conversations.** Swipe two fingers sideways on any row (inbox, labels,
+  search) to archive, delete or mark it read or unread. Release past the threshold to commit;
+  otherwise the row springs back. Choose what each direction does under Settings → General.
+  In Trash, swiping restores; in Spam it marks Not spam. Confirm-before-archive/delete is
+  respected, and an Undo toast appears.
+
 ## [1.5.0] - 2026-10-28
 
 ### Settings
@@ -138,6 +147,7 @@ the Android Gmail app and built on the public Gmail API.
 - The app isn't notarized: approve it once in System Settings → Privacy & Security.
 - You need your own Google Cloud OAuth client; see [docs/google-setup.md](https://github.com/mikevillargr/chaucer/blob/main/docs/google-setup.md).
 
+[1.6.0]: https://github.com/mikevillargr/chaucer/releases/tag/v1.6.0
 [1.5.0]: https://github.com/mikevillargr/chaucer/releases/tag/v1.5.0
 [1.4.0]: https://github.com/mikevillargr/chaucer/releases/tag/v1.4.0
 [1.3.0]: https://github.com/mikevillargr/chaucer/releases/tag/v1.3.0

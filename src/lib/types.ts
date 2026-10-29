@@ -157,6 +157,8 @@ export interface Prefs {
   confirmSend?: boolean;
   inboxType?: "default" | "important" | "unread" | "starred";
   categoryTabs?: string[];
+  swipeRight?: "archive" | "delete" | "read" | "none";
+  swipeLeft?: "archive" | "delete" | "read" | "none";
   notifyAccounts?: Record<string, boolean>;
   llmFeatures?: { smartReply?: string; summary?: string; write?: string };
   [key: string]: unknown;

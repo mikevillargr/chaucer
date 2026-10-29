@@ -116,7 +116,7 @@ export function refreshMail(qc: QueryClient) {
   qc.invalidateQueries({ queryKey: ["status"] });
 }
 
-type Action =
+export type Action =
   | "archive" | "unarchive" | "trash" | "untrash" | "spam" | "notSpam" | "star" | "unstar"
   | "important" | "notImportant" | "read" | "unread";
 

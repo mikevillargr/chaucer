@@ -20,6 +20,7 @@ Legend: `[ ]` to do · `[x]` done · API = Gmail API v1 unless noted.
 - [ ] Unread counts per label → `labels.get` (`threadsUnread`)
 - [ ] List density Default / Comfortable / Compact — `density_option_*`
 - [ ] Refresh — `gmail_shortcut_refresh…` → `history.list` incremental sync
+- [ ] Trackpad swipe on a row (two fingers, left/right): Archive, Delete, Mark read/unread or None per direction (Settings → General); in Trash/Spam "archive" restores; no-op in folders where the thread is not in Inbox
 - [ ] Bulk select + select all — `gmail_shortcut_select_all`
 
 ## Reading
@@ -87,6 +88,6 @@ Legend: `[ ]` to do · `[x]` done · API = Gmail API v1 unless noted.
 ## Out of scope (no public API, or excluded to keep it simple)
 Mute (`MSG_MUTE_BUTTON_LABEL`), undo send, schedule send (`MSG_SCHEDULE_MESSAGE_BUTTON`), snooze (`MSG_LABEL_DISPLAY_NAME_FOR_SNOOZED`),
 nudges, confidential mode, dynamic email (AMP), package tracking, AI Inbox, high-priority
-notifications, swipe actions (touch-only), Chat, Spaces, Meet, Exchange/IMAP accounts,
+notifications, touch-screen swipe, Chat, Spaces, Meet, Exchange/IMAP accounts,
 offline action queue, Windows/Linux builds. Deferred for simplicity: turning conversation view off,
 per-label notifications, configurable days of mail to sync.

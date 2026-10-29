@@ -455,3 +455,15 @@ kbd { font: 500 11.5px var(--font-mono); background: var(--surface-container-low
 }
 .mention-menu button.on, .mention-menu button:hover { background: var(--hover); }
 .mention-menu small { color: var(--on-surface-variant); font-size: 11.5px; }
+
+/* Trackpad swipe: the row slides over a label strip; past the threshold the strip fills to say "release to commit". */
+.swipe { position: relative; overflow: hidden; }
+.swipe-bg {
+  position: absolute; inset: 0; display: flex; align-items: center; gap: 8px; padding: 0 24px; opacity: 0;
+  background: var(--surface-container-high); color: var(--on-surface-variant); font: 500 13px var(--font-body, inherit);
+  transition: background-color var(--dur-fast), color var(--dur-fast);
+}
+.swipe-bg.left { justify-content: flex-end; }
+.swipe[data-dir="right"] .swipe-bg.right, .swipe[data-dir="left"] .swipe-bg.left { opacity: 1; }
+.swipe[data-armed="true"] .swipe-bg { background: var(--selected-strong); color: var(--on-selected-strong); }
+.swipe[data-dir] .row { background: var(--surface); will-change: transform; }

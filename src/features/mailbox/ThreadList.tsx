@@ -9,19 +9,45 @@ import type { ThreadSummary } from "../../lib/types";
 import { useConfirmed } from "../thread/useConfirmed";
 import { LabelMenu } from "./LabelMenu";
 import { SearchBar } from "./SearchBar";
+import { resolveSwipe, useTrackpadSwipe, type SwipeDir } from "./swipe";
 
-function Row({ t, me, selected, checked, onOpen, onCheck }: {
-  t: ThreadSummary; me?: string; selected: boolean; checked: boolean; onOpen: () => void; onCheck: () => void;
+function Row({ t, me, folder, selected, checked, onOpen, onCheck }: {
+  t: ThreadSummary; me?: string; folder: string; selected: boolean; checked: boolean; onOpen: () => void; onCheck: () => void;
 }) {
   const { run } = useActions();
   const confirmed = useConfirmed();
+  const prefs = usePrefs();
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
   const labels = useLabels(t.accountId).data ?? [];
   const ref = { accountId: t.accountId, threadId: t.id };
   const chips = chipLabels(t.labelIds, labels).slice(0, 3);
   const last = t.senders[t.senders.length - 1] ?? { name: "", email: "" };
   const isDraft = t.labelIds.includes("DRAFT");
+  // Two-finger trackpad swipe: right and left each run the action chosen in Settings.
+  const swipe = {
+    right: resolveSwipe(prefs.swipeRight ?? "archive", t, folder),
+    left: resolveSwipe(prefs.swipeLeft ?? "archive", t, folder),
+  };
+  useTrackpadSwipe(wrapRef, rowRef, {
+    ...swipe,
+    onCommit: async (dir: SwipeDir) => {
+      const s = swipe[dir];
+      if (!s) return false;
+      if (s.action === "archive") return !!(await confirmed.archive([ref]));
+      if (s.action === "trash") return !!(await confirmed.trash([ref]));
+      return run(s.action, [ref]);
+    },
+  });
   return (
+    <div className="swipe" ref={wrapRef}>
+      {(["right", "left"] as const).map((dir) => swipe[dir] && (
+        <div key={dir} className={`swipe-bg ${dir}`} aria-hidden="true">
+          <Icon name={swipe[dir]!.icon} /> <span>{swipe[dir]!.label}</span>
+        </div>
+      ))}
     <div
+      ref={rowRef}
       className={`row ${t.unread ? "unread" : ""} ${selected ? "selected" : ""} ${checked ? "checked" : ""}`}
       onClick={onOpen}
       role="option"
@@ -73,6 +99,7 @@ function Row({ t, me, selected, checked, onOpen, onCheck }: {
         <IconButton small icon={t.unread ? "drafts" : "mark_email_unread"} label={t.unread ? "Mark as read" : "Mark as unread"}
           onClick={() => void run(t.unread ? "read" : "unread", [ref])} />
       </div>
+    </div>
     </div>
   );
 }
@@ -214,6 +241,7 @@ export function ThreadList() {
                     key={refKey(ref)}
                     t={t}
                     me={meFor(t.accountId)}
+                    folder={view.label}
                     selected={selected?.threadId === t.id && selected.accountId === t.accountId}
                     checked={checked.includes(refKey(ref))}
                     onOpen={() => select(ref)}

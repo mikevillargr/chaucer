@@ -1,3 +1,4 @@
+import { SWIPE_THRESHOLD, resist, resolveSwipe } from "../features/mailbox/swipe";
 import { sanitizeEmail } from "../features/thread/EmailFrame";
 import { htmlToText, parseAddrList, parseMailto, prefixed, sendersLine } from "../lib/format";
 import { labelTree } from "../lib/labels";
@@ -145,4 +146,29 @@ it("maps neutral email text onto app text tones in dark mode", async () => {
   expect(darkModeText(parseColor("#222")!, bg)).toBe("#e9eef3");
   expect(darkModeText(parseColor("#666")!, bg)).toBe("#b4c2cd");
   expect(darkModeText(parseColor("#b91c1c")!, bg)).not.toBe("#e9eef3"); // coloured text keeps its hue
+});
+
+describe("trackpad swipe", () => {
+  it("resolves the configured action per folder", () => {
+    const inbox = thread(["INBOX", "UNREAD"]);
+    expect(resolveSwipe("archive", inbox, "INBOX")?.action).toBe("archive");
+    expect(resolveSwipe("archive", thread(["SENT"]), "SENT")).toBeNull();
+    expect(resolveSwipe("archive", thread(["TRASH"]), "TRASH")?.action).toBe("untrash");
+    expect(resolveSwipe("archive", thread(["SPAM"]), "SPAM")?.action).toBe("notSpam");
+    expect(resolveSwipe("delete", inbox, "INBOX")?.action).toBe("trash");
+    expect(resolveSwipe("delete", thread(["TRASH"]), "TRASH")).toBeNull();
+    expect(resolveSwipe("none", inbox, "INBOX")).toBeNull();
+  });
+
+  it("toggles read state", () => {
+    expect(resolveSwipe("read", { ...thread(["INBOX"]), unread: true }, "INBOX")?.action).toBe("read");
+    expect(resolveSwipe("read", thread(["INBOX"]), "INBOX")?.action).toBe("unread");
+  });
+
+  it("resists past the threshold and keeps the sign", () => {
+    expect(resist(50, 400)).toBe(50);
+    expect(resist(-SWIPE_THRESHOLD, 400)).toBe(-SWIPE_THRESHOLD);
+    expect(resist(SWIPE_THRESHOLD + 100, 400)).toBeCloseTo(SWIPE_THRESHOLD + 35);
+    expect(resist(5000, 400)).toBe(240);
+  });
 });

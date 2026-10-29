@@ -37,6 +37,8 @@ function Toggle<K extends keyof Prefs>({ k, title, hint, def = false }: { k: K; 
   return <Setting title={title} hint={hint}><Switch label={title} on={on} onChange={(v) => set.mutate({ [k]: v })} /></Setting>;
 }
 
+const SWIPE_OPTIONS: [string, string][] = [["archive", "Archive"], ["delete", "Delete"], ["read", "Mark read / unread"], ["none", "None"]];
+
 function Choice<K extends keyof Prefs>({ k, title, hint, options, def }: {
   k: K; title: string; hint?: string; options: [string, string][]; def: string;
 }) {
@@ -78,6 +80,10 @@ function General() {
       <Choice k="defaultReply" title="Default reply action" def="reply" options={[["reply", "Reply"], ["replyAll", "Reply all"]]} />
       <Choice k="autoAdvance" title="Auto-advance" hint="Show this after you archive or delete a conversation" def="newer"
         options={[["newer", "Newer conversation"], ["older", "Older conversation"], ["list", "Conversation list"]]} />
+      <Choice k="swipeRight" title="Trackpad swipe right" def="archive" hint="Swipe a conversation right with two fingers"
+        options={SWIPE_OPTIONS} />
+      <Choice k="swipeLeft" title="Trackpad swipe left" def="archive" hint="Swipe a conversation left with two fingers"
+        options={SWIPE_OPTIONS} />
       <Choice k="externalImages" title="Images" hint="External images can tell the sender you opened the message" def="ask"
         options={[["ask", "Ask before displaying external images"], ["always", "Always display external images"]]} />
       <Toggle k="confirmArchive" title="Confirm before archiving" />

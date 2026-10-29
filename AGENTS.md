@@ -83,6 +83,7 @@ script's own folder.
 | `scripts/dev/scroll-test.mjs` | List and reader panes scroll in a short window |
 | `scripts/dev/contrast-audit.mjs` | axe WCAG AA colour contrast in light and dark, plus a pane-resize drag (needs `@axe-core/playwright`) |
 | `scripts/dev/mention-test.mjs` | @/+ mentions: menu, insert, adds to To, Escape, no trigger inside email addresses |
+| `scripts/dev/swipe-test.mjs` | Trackpad swipe on rows: follows fingers, springs back below threshold, ignores vertical scroll, commits archive on release |
 | `scripts/dev/screenshots.mjs` | Screenshots of inbox, reader, compose, settings, dark mode |
 
 The mock (`src/lib/ipc.mock.ts`) includes test fixtures: a simple email with hard-coded dark

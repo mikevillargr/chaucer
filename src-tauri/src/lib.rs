@@ -35,7 +35,18 @@ impl App {
     /// A Gmail client with a fresh access token; flags accounts that need signing in again.
     pub async fn gmail(&self, account: &str) -> Result<gmail::Gmail> {
         match self.tokens.access_token(&self.http, self.cfg.google_client(), account).await {
-            Ok(token) => Ok(gmail::Gmail::new(self.http.clone(), token, self.limiter(account))),
+            Ok(token) => {
+                let (tokens, http, client, id) =
+                    (self.tokens.clone(), self.http.clone(), self.cfg.google_client(), account.to_string());
+                let refresh: gmail::Refresh = Arc::new(move || {
+                    let (tokens, http, client, id) = (tokens.clone(), http.clone(), client.clone(), id.clone());
+                    Box::pin(async move {
+                        tokens.forget(&id).await;
+                        tokens.access_token(&http, client, &id).await
+                    })
+                });
+                Ok(gmail::Gmail::new(self.http.clone(), token, self.limiter(account)).with_refresh(refresh))
+            }
             Err(e @ Error::NotSignedIn(_)) => {
                 let _ = self.db.set_needs_reauth(account, true);
                 Err(e)

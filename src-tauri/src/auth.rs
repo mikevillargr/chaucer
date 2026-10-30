@@ -8,7 +8,8 @@ use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
-use std::time::{Duration, Instant};
+use std::sync::Arc;
+use std::time::{Duration, SystemTime};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 use tokio::sync::Mutex;
@@ -173,14 +174,16 @@ pub async fn revoke(http: &reqwest::Client, token: &str) {
 }
 
 /// Hands out valid access tokens per account, refreshing them when they expire.
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Tokens {
-    cache: Mutex<HashMap<String, (String, Instant)>>,
+    // Expiry is wall-clock time: `Instant` stops while a Mac sleeps, so a token cached before
+    // an overnight sleep would look valid on wake and Gmail would answer 401.
+    cache: Arc<Mutex<HashMap<String, (String, SystemTime)>>>,
 }
 
 impl Tokens {
     pub async fn put(&self, account: &str, access: String, expires_in: u64) {
-        let expiry = Instant::now() + Duration::from_secs(expires_in.saturating_sub(60));
+        let expiry = SystemTime::now() + Duration::from_secs(expires_in.saturating_sub(60));
         self.cache.lock().await.insert(account.to_string(), (access, expiry));
     }
 
@@ -195,7 +198,7 @@ impl Tokens {
         account: &str,
     ) -> Result<String> {
         if let Some((token, expiry)) = self.cache.lock().await.get(account) {
-            if Instant::now() < *expiry {
+            if SystemTime::now() < *expiry {
                 return Ok(token.clone());
             }
         }
@@ -230,6 +233,18 @@ mod tests {
         // RFC 7636 appendix B.
         let verifier = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
         assert_eq!(pkce_challenge(verifier), "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM");
+    }
+
+    #[tokio::test]
+    async fn cached_token_expires_on_wall_clock() {
+        let tokens = Tokens::default();
+        let http = reqwest::Client::new();
+        tokens.put("a@x.com", "fresh".into(), 3600).await;
+        assert_eq!(tokens.access_token(&http, None, "a@x.com").await.unwrap(), "fresh");
+        // Within the 60s safety margin counts as expired; with no client configured the
+        // refresh path is reached and fails instead of returning the stale token.
+        tokens.put("a@x.com", "stale".into(), 30).await;
+        assert!(tokens.access_token(&http, None, "a@x.com").await.is_err());
     }
 
     #[test]

@@ -159,28 +159,48 @@ fn is_rate_limit(status: u16, body: &str) -> bool {
                 .any(|s| body.contains(s)))
 }
 
+/// Fetches a brand-new access token; used to recover from a 401.
+pub type Refresh = Arc<dyn Fn() -> futures::future::BoxFuture<'static, Result<String>> + Send + Sync>;
+
 pub struct Gmail {
     http: reqwest::Client,
-    token: String,
+    token: std::sync::Mutex<String>,
     limiter: Arc<Limiter>,
+    refresh: Option<Refresh>,
 }
 
 impl Gmail {
     pub fn new(http: reqwest::Client, token: String, limiter: Arc<Limiter>) -> Self {
-        Gmail { http, token, limiter }
+        Gmail { http, token: std::sync::Mutex::new(token), limiter, refresh: None }
+    }
+
+    /// On a 401 (token expired or invalidated), get a new token and retry the call once.
+    pub fn with_refresh(mut self, refresh: Refresh) -> Self {
+        self.refresh = Some(refresh);
+        self
     }
 
     async fn call(&self, method: Method, url: &str, query: &[(&str, String)], body: Option<Value>) -> Result<Value> {
         let mut attempt = 0u32;
+        let mut refreshed = false;
         loop {
             self.limiter.take(quota_cost(&method, url)).await;
-            let mut req = self.http.request(method.clone(), url).bearer_auth(&self.token).query(query);
+            let token = self.token.lock().unwrap().clone();
+            let mut req = self.http.request(method.clone(), url).bearer_auth(token).query(query);
             if let Some(b) = &body {
                 req = req.json(b);
             }
             let resp = req.send().await?;
             let status = resp.status().as_u16();
             let text = resp.text().await?;
+            if status == 401 && !refreshed {
+                if let Some(refresh) = &self.refresh {
+                    refreshed = true;
+                    let fresh = refresh().await?;
+                    *self.token.lock().unwrap() = fresh;
+                    continue;
+                }
+            }
             let limited = is_rate_limit(status, &text);
             if (limited || status >= 500) && attempt < 5 {
                 attempt += 1;

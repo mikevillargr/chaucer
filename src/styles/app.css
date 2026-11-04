@@ -467,3 +467,29 @@ kbd { font: 500 11.5px var(--font-mono); background: var(--surface-container-low
 .swipe[data-dir="right"] .swipe-bg.right, .swipe[data-dir="left"] .swipe-bg.left { opacity: 1; }
 .swipe[data-armed="true"] .swipe-bg { background: var(--selected-strong); color: var(--on-selected-strong); }
 .swipe[data-dir] .row { background: var(--surface); will-change: transform; }
+
+/* ---- Windows: frameless window with our own caption buttons ----------------------------- */
+/* data-platform is set once at startup (src/lib/platform.ts). Everything here is Windows-only. */
+.win-controls { display: none; }
+:root[data-platform="windows"] { --win-controls-w: 138px; }
+:root[data-platform="windows"] .win-controls {
+  position: fixed; top: 0; right: 0; z-index: 1000; height: 32px; display: flex;
+  -webkit-app-region: no-drag; app-region: no-drag;
+}
+.win-controls button {
+  width: 46px; height: 32px; border: 0; border-radius: 0; background: none; color: var(--on-surface);
+  display: grid; place-items: center; -webkit-app-region: no-drag; app-region: no-drag;
+}
+.win-controls button .ms { font-size: 16px; }
+.win-controls button:hover { background: var(--hover); }
+.win-controls button:active { background: var(--pressed); }
+.win-controls button.close:hover { background: var(--win-close); color: #fff; }
+.win-controls button:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+/* No traffic lights to clear. */
+:root[data-platform="windows"] .sidebar-top { padding-left: 12px; }
+:root[data-platform="windows"] .lightbox-bar { padding-left: 16px; }
+/* Keep the rightmost pane's top bar clear of the caption buttons. */
+:root[data-platform="windows"] .reader-bar,
+:root[data-platform="windows"] .lightbox-bar { padding-right: var(--win-controls-w); }
+:root[data-platform="windows"] .app.no-reader .list-head { padding-right: calc(var(--win-controls-w) + 8px); }
+:root[data-platform="windows"] .settings-main { margin-top: 32px; }

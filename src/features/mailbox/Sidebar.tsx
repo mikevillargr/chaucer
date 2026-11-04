@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Avatar, Icon, IconButton } from "../../components/ui";
+import { hint } from "../../lib/platform";
 import { labelTree, SYSTEM_NAV, type LabelNode } from "../../lib/labels";
 import { useAccounts, useLabels } from "../../lib/queries";
 import { useUi } from "../../lib/store";
@@ -60,7 +61,7 @@ export function Sidebar() {
     <aside className="sidebar">
       <div className="sidebar-top drag" data-tauri-drag-region>
         <span className="wordmark" data-tauri-drag-region><img src="/icon.png" alt="" />Chaucer</span>
-        <IconButton icon="settings" label="Settings (⌘,)" onClick={() => openSettings("general")} />
+        <IconButton icon="settings" label={`Settings ${hint("Mod+,")}`} onClick={() => openSettings("general")} />
       </div>
       <button className="compose-fab" onClick={() => startCompose()}>
         <Icon name="edit" /> Compose

@@ -136,6 +136,7 @@
   --r-window: 18px;
   --r-pill: 999px;
   --titlebar: 52px;
+  --win-close: #c42b1c; /* Windows caption close-button hover; a plain red, not the accent */
   --row-h: 76px;
 }
 [data-density="comfortable"] { --row-h: 66px; }

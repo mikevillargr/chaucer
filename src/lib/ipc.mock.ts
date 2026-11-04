@@ -134,6 +134,7 @@ const handlers: Record<string, (a: any) => unknown> = {
   add_account: () => accounts[0],
   remove_account: () => undefined,
   sync_now: () => undefined,
+  initial_mailto: () => null,
   get_prefs: () => prefs,
   set_prefs: ({ patch }) => {
     prefs = { ...prefs, ...patch };

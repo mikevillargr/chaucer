@@ -1,3 +1,4 @@
+import { detectPlatform, formatShortcut } from "../lib/platform";
 import { SWIPE_THRESHOLD, resist, resolveSwipe } from "../features/mailbox/swipe";
 import { sanitizeEmail } from "../features/thread/EmailFrame";
 import { htmlToText, parseAddrList, parseMailto, prefixed, sendersLine } from "../lib/format";
@@ -170,5 +171,32 @@ describe("trackpad swipe", () => {
     expect(resist(-SWIPE_THRESHOLD, 400)).toBe(-SWIPE_THRESHOLD);
     expect(resist(SWIPE_THRESHOLD + 100, 400)).toBeCloseTo(SWIPE_THRESHOLD + 35);
     expect(resist(5000, 400)).toBe(240);
+  });
+});
+
+describe("platform helpers", () => {
+  it("detects the platform from the user agent, with a preview override", () => {
+    const win = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36 Edg/126";
+    const mac = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko)";
+    const linux = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/126 Safari/537.36";
+    expect(detectPlatform(win)).toBe("windows");
+    expect(detectPlatform(mac)).toBe("mac");
+    expect(detectPlatform(linux)).toBe("mac"); // everything but Windows keeps the Mac-style UI
+    expect(detectPlatform(linux, "?platform=windows")).toBe("windows");
+    expect(detectPlatform(win, "?platform=mac")).toBe("mac");
+    expect(detectPlatform(win, "?platform=bogus")).toBe("windows");
+    expect(detectPlatform(linux, "?platform=windows", false)).toBe("mac"); // no override in an installed app
+  });
+
+  it("formats shortcuts per platform", () => {
+    expect(formatShortcut("Mod+R", { windows: false })).toBe("⌘R");
+    expect(formatShortcut("Mod+R", { windows: false, spaced: true })).toBe("⌘ R");
+    expect(formatShortcut("Mod+Enter", { windows: false, spaced: true })).toBe("⌘ ↩");
+    expect(formatShortcut("Shift+U", { windows: false })).toBe("⇧U");
+    expect(formatShortcut("Mod+Shift+Enter", { windows: false })).toBe("⌘⇧↩");
+    expect(formatShortcut("Mod+R", { windows: true })).toBe("Ctrl+R");
+    expect(formatShortcut("Mod+,", { windows: true, spaced: true })).toBe("Ctrl+,");
+    expect(formatShortcut("Mod+Shift+Enter", { windows: true })).toBe("Ctrl+Shift+Enter");
+    expect(formatShortcut("Shift+I", { windows: true, spaced: true })).toBe("Shift+I");
   });
 });

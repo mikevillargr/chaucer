@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { hint } from "../../lib/platform";
 import { readableOn } from "../../lib/color";
 import { Avatar, Icon, IconButton, Spinner } from "../../components/ui";
 import { shortDate, sendersLine } from "../../lib/format";
@@ -201,7 +202,7 @@ export function ThreadList() {
         ) : (
           <>
             <span className="title">{title}</span>
-            {list.refreshing ? <Spinner /> : <IconButton icon="refresh" label="Refresh (⌘R)" onClick={() => void list.refetch()} />}
+            {list.refreshing ? <Spinner /> : <IconButton icon="refresh" label={`Refresh ${hint("Mod+R")}`} onClick={() => void list.refetch()} />}
           </>
         )}
       </div>

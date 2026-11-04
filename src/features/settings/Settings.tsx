@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Avatar, confirmDialog, Icon, IconButton, Spinner, Switch } from "../../components/ui";
+import { isWindows, notificationSettingsPath } from "../../lib/platform";
 import { api } from "../../lib/ipc";
 import { CATEGORIES, LABEL_COLORS, labelName } from "../../lib/labels";
 import { refreshMail, useAccounts, useLabels, usePrefs, useProviders, useSetPrefs } from "../../lib/queries";
@@ -178,7 +179,7 @@ function Accounts() {
           <div className="txt">{a.displayName ?? a.email}<small>{a.email}{a.needsReauth && " · signed out, sign in again"}</small></div>
           {a.needsReauth && <button className="btn" onClick={() => void add(a.email)} disabled={!!busy}>Sign in</button>}
           <button className="btn danger" onClick={async () => {
-            if (!(await confirmDialog(`Remove ${a.email}?`, "Its saved mail is removed from this Mac. Nothing is deleted from Gmail.", "Remove"))) return;
+            if (!(await confirmDialog(`Remove ${a.email}?`, "Its saved mail is removed from this computer. Nothing is deleted from Gmail.", "Remove"))) return;
             await api.removeAccount(a.id);
             refreshMail(qc);
           }}>Remove</button>
@@ -326,7 +327,7 @@ function VacationSection() {
   return (
     <>
       <h2>Vacation responder</h2>
-      <p className="lead">Send an automatic reply while you're away. Gmail sends it, even when your Mac is off.</p>
+      <p className="lead">Send an automatic reply while you're away. Gmail sends it, even when your computer is off.</p>
       <AccountPicker value={accountId} onChange={setAccountId} />
       <Setting title="Vacation responder"><Switch label="Vacation responder" on={v.enableAutoReply} onChange={(on) => setV({ ...v, enableAutoReply: on })} /></Setting>
       <div className="form-grid" style={{ marginTop: 16 }}>
@@ -358,7 +359,7 @@ function Notifications() {
   return (
     <>
       <h2>Notifications</h2>
-      <p className="lead">Chaucer notifies you about new mail in your Inbox while it's running. macOS controls sounds and banners in System Settings → Notifications.</p>
+      <p className="lead">Chaucer notifies you about new mail in your Inbox while it's running. {isWindows ? "Windows" : "macOS"} controls sounds and banners in {notificationSettingsPath()}.</p>
       {accounts.map((a) => (
         <Setting key={a.id} title={a.email}>
           <Switch label={`Notifications for ${a.email}`} on={map[a.id] ?? true} onChange={(v) => set.mutate({ notifyAccounts: { ...map, [a.id]: v } })} />

@@ -1,5 +1,6 @@
 # Tests for every pull request and every push to main, on Linux (no macOS queue).
-# The macOS build only runs for release tags: see release.yml and AGENTS.md.
+# A Windows job checks the Windows-only code paths (credential store, platform config).
+# The macOS and Windows installers are only built for release tags: see release.yml and AGENTS.md.
 name: CI
 
 on:
@@ -37,6 +38,30 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      - run: npm run build
+      - run: cargo test
+        working-directory: src-tauri
+
+  test-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      # tauri's build script needs the built frontend (frontendDist) to exist.
       - run: npm run build
       - run: cargo test
         working-directory: src-tauri

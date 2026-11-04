@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { api } from "../lib/ipc";
+import { formatShortcut as fs } from "../lib/platform";
 import { refreshMail, undoLast, useActions, usePrefs } from "../lib/queries";
 import { refKey, useUi } from "../lib/store";
 import type { ThreadDetail } from "../lib/types";
@@ -8,15 +9,18 @@ import { useStartCompose } from "./compose/startCompose";
 import { useAdvance } from "./thread/Reader";
 import { useConfirmed } from "./thread/useConfirmed";
 
-/** Gmail keyboard shortcuts (the set Android Gmail lists under gmail_shortcut_*). */
-export const SHORTCUTS: [string, string][] = [
-  ["c", "Compose"], ["r", "Reply"], ["a", "Reply all"], ["f", "Forward"], ["e", "Archive"], ["#", "Delete"],
-  ["!", "Report spam"], ["s", "Star / unstar"], ["⇧ I", "Mark as read"], ["⇧ U", "Mark as unread"],
-  ["j / k", "Older / newer conversation"], ["Enter / o", "Open conversation"], ["x", "Select conversation"],
-  ["u / Esc", "Back to list"], ["/", "Search"], ["z", "Undo last action"], ["⌘ R", "Refresh"], ["⌘ ,", "Settings"],
-  ["⌘ P", "Print"], ["⌘ ↩", "Send (in compose)"], ["⌘ S", "Save draft (in compose)"], ["Esc", "Close compose and save"],
-  ["?", "Show keyboard shortcuts"],
-];
+/** Gmail keyboard shortcuts (the set Android Gmail lists under gmail_shortcut_*), labelled for this platform. */
+export function getShortcuts(): [string, string][] {
+  const k = (combo: string) => fs(combo, { spaced: true });
+  return [
+    ["c", "Compose"], ["r", "Reply"], ["a", "Reply all"], ["f", "Forward"], ["e", "Archive"], ["#", "Delete"],
+    ["!", "Report spam"], ["s", "Star / unstar"], [k("Shift+I"), "Mark as read"], [k("Shift+U"), "Mark as unread"],
+    ["j / k", "Older / newer conversation"], ["Enter / o", "Open conversation"], ["x", "Select conversation"],
+    ["u / Esc", "Back to list"], ["/", "Search"], ["z", "Undo last action"], [k("Mod+R"), "Refresh"], [k("Mod+,"), "Settings"],
+    [k("Mod+P"), "Print"], [k("Mod+Enter"), "Send (in compose)"], [k("Mod+S"), "Save draft (in compose)"], ["Esc", "Close compose and save"],
+    ["?", "Show keyboard shortcuts"],
+  ];
+}
 
 function typing(e: KeyboardEvent) {
   const t = e.target as HTMLElement;

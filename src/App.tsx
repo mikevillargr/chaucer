@@ -2,21 +2,25 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Fragment, useEffect } from "react";
 import { Resizer } from "./components/Resizer";
 import { ConfirmHost, Dialog, Spinner, Toasts } from "./components/ui";
+import { WindowControls } from "./components/WindowControls";
 import { ComposeDock } from "./features/compose/Compose";
 import { useStartCompose } from "./features/compose/startCompose";
 import { Sidebar } from "./features/mailbox/Sidebar";
 import { ThreadList } from "./features/mailbox/ThreadList";
 import { Settings } from "./features/settings/Settings";
 import { Onboarding } from "./features/setup/Onboarding";
-import { SHORTCUTS, useShortcuts } from "./features/shortcuts";
+import { getShortcuts, useShortcuts } from "./features/shortcuts";
 import { Reader } from "./features/thread/Reader";
 import { CHECK_INTERVAL_MS, useUpdates } from "./features/updates/updates";
 import { parseMailto } from "./lib/format";
-import { on } from "./lib/ipc";
+import { api, on } from "./lib/ipc";
 import { refreshMail, usePrefs, useStatus } from "./lib/queries";
 import { clampWidth, usePanes } from "./lib/panes";
 import { useUi } from "./lib/store";
 import { themeFamily } from "./lib/theme";
+
+// Module-level so React StrictMode's double effect run in dev doesn't open the draft twice.
+let launchMailtoChecked = false;
 
 function ShortcutsHelp() {
   const { shortcutsHelp, setShortcutsHelp } = useUi();
@@ -24,7 +28,7 @@ function ShortcutsHelp() {
   return (
     <Dialog title="Keyboard shortcuts" onClose={() => setShortcutsHelp(false)} actions={<button className="btn text" onClick={() => setShortcutsHelp(false)}>Close</button>}>
       <div className="shortcut-grid">
-        {SHORTCUTS.map(([k, d]) => <Fragment key={k}><kbd>{k}</kbd><span>{d}</span></Fragment>)}
+        {getShortcuts().map(([k, d]) => <Fragment key={k}><kbd>{k}</kbd><span>{d}</span></Fragment>)}
       </div>
     </Dialog>
   );
@@ -81,6 +85,20 @@ export default function App() {
     return () => { clearTimeout(first); clearInterval(every); };
   }, []);
 
+  // A mailto: link that launched the app (Windows/Linux pass it on the command line) arrives
+  // before this listener exists, so ask for it once.
+  useEffect(() => {
+    if (launchMailtoChecked) return;
+    launchMailtoChecked = true;
+    void api.initialMailto().then((url) => {
+      if (!url) return;
+      try {
+        const f = parseMailto(url);
+        void startCompose({ to: f.to, cc: f.cc, bcc: f.bcc, subject: f.subject, body: f.body });
+      } catch { /* ignore malformed links */ }
+    }).catch(() => undefined);
+  }, [startCompose]);
+
   useEffect(() => {
     const subs = [
       on("mail-changed", () => refreshMail(qc)),
@@ -106,6 +124,7 @@ export default function App() {
       <ShortcutsHelp />
       <ConfirmHost />
       <Toasts />
+      <WindowControls />
     </>
   );
 }

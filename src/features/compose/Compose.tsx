@@ -6,6 +6,7 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { confirmDialog, Icon, IconButton, Spinner } from "../../components/ui";
+import { hint } from "../../lib/platform";
 import { htmlToText, textToHtml } from "../../lib/format";
 import { api, native } from "../../lib/ipc";
 import { refreshMail, useAccounts, usePrefs, useProviders, useSendAs } from "../../lib/queries";
@@ -320,9 +321,9 @@ export function Compose({ c }: { c: ComposeState }) {
           )}
           {formatBar && editor && (
             <div className="format-bar">
-              <IconButton small icon="format_bold" label="Bold (⌘B)" className={editor.isActive("bold") ? "on" : ""} onClick={() => editor.chain().focus().toggleBold().run()} />
-              <IconButton small icon="format_italic" label="Italic (⌘I)" className={editor.isActive("italic") ? "on" : ""} onClick={() => editor.chain().focus().toggleItalic().run()} />
-              <IconButton small icon="format_underlined" label="Underline (⌘U)" className={editor.isActive("underline") ? "on" : ""} onClick={() => editor.chain().focus().toggleUnderline().run()} />
+              <IconButton small icon="format_bold" label={`Bold ${hint("Mod+B")}`} className={editor.isActive("bold") ? "on" : ""} onClick={() => editor.chain().focus().toggleBold().run()} />
+              <IconButton small icon="format_italic" label={`Italic ${hint("Mod+I")}`} className={editor.isActive("italic") ? "on" : ""} onClick={() => editor.chain().focus().toggleItalic().run()} />
+              <IconButton small icon="format_underlined" label={`Underline ${hint("Mod+U")}`} className={editor.isActive("underline") ? "on" : ""} onClick={() => editor.chain().focus().toggleUnderline().run()} />
               <IconButton small icon="strikethrough_s" label="Strikethrough" className={editor.isActive("strike") ? "on" : ""} onClick={() => editor.chain().focus().toggleStrike().run()} />
               <IconButton small icon="format_list_bulleted" label="Bulleted list" className={editor.isActive("bulletList") ? "on" : ""} onClick={() => editor.chain().focus().toggleBulletList().run()} />
               <IconButton small icon="format_list_numbered" label="Numbered list" className={editor.isActive("orderedList") ? "on" : ""} onClick={() => editor.chain().focus().toggleOrderedList().run()} />

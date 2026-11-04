@@ -37,5 +37,10 @@ thiserror = "2.0.21"
 tokio = { version = "1.54.1", features = ["macros", "rt-multi-thread", "net", "io-util", "time", "sync"] }
 url = "2.5.8"
 
+# WebView2 settings (browser accelerator keys) are not exposed by tauri itself.
+[target.'cfg(windows)'.dependencies]
+webview2-com = "0.39"
+windows-core = "0.62"
+
 [dev-dependencies]
 tempfile = "3.27.0"

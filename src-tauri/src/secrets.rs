@@ -1,4 +1,5 @@
-//! macOS Keychain storage for refresh tokens and LLM API keys.
+//! OS credential storage for refresh tokens and LLM API keys: the macOS Keychain, or Windows
+//! Credential Manager (keyring picks the backend by platform).
 
 use crate::error::Result;
 
@@ -45,4 +46,28 @@ pub fn refresh_token_key(account: &str) -> String {
 
 pub fn llm_key(provider_id: &str) -> String {
     format!("llm:{provider_id}")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Real OS credential store round trip across separate processes. Run by hand:
+    ///   CHAUCER_CRED_PHASE=write cargo test --lib secrets -- --ignored
+    ///   CHAUCER_CRED_PHASE=read  cargo test --lib secrets -- --ignored
+    ///   CHAUCER_CRED_PHASE=delete cargo test --lib secrets -- --ignored
+    #[test]
+    #[ignore = "touches the real OS credential store"]
+    fn credential_round_trip_across_processes() {
+        let key = "test:roundtrip";
+        match std::env::var("CHAUCER_CRED_PHASE").as_deref() {
+            Ok("write") => set(key, "s3cret-value").unwrap(),
+            Ok("read") => assert_eq!(get(key).unwrap().as_deref(), Some("s3cret-value")),
+            Ok("delete") => {
+                delete(key).unwrap();
+                assert_eq!(get(key).unwrap(), None);
+            }
+            _ => panic!("set CHAUCER_CRED_PHASE=write|read|delete"),
+        }
+    }
 }

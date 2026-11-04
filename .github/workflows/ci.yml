@@ -1,5 +1,7 @@
 # Tests for every pull request and every push to main, on Linux (no macOS queue).
-# A Windows job checks the Windows-only code paths (credential store, platform config).
+# A Windows job checks the Windows-only code paths (credential store, platform config). A macOS
+# job runs on pull requests only when shared native code or config changed, so Windows work can't
+# silently break the Mac app (macOS runners queue, so it is skipped for UI/docs-only PRs).
 # The macOS and Windows installers are only built for release tags: see release.yml and AGENTS.md.
 name: CI
 
@@ -64,4 +66,49 @@ jobs:
       # tauri's build script needs the built frontend (frontendDist) to exist.
       - run: npm run build
       - run: cargo test
+        working-directory: src-tauri
+
+  test-macos:
+    if: github.event_name == 'pull_request'
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Did shared native code or config change?
+        id: changed
+        run: |
+          if git diff --name-only "origin/${{ github.base_ref }}...HEAD"             | grep -Eq '^(src-tauri/(src/|capabilities/|build[.]rs|Cargo[.](toml|lock)|tauri[.]conf[.]json)|package(-lock)?[.]json|[.]github/workflows/ci[.]yml)'; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "No shared native changes; skipping the macOS check"
+          fi
+
+      - if: steps.changed.outputs.run == 'true'
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - if: steps.changed.outputs.run == 'true'
+        uses: dtolnay/rust-toolchain@stable
+
+      - if: steps.changed.outputs.run == 'true'
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - if: steps.changed.outputs.run == 'true'
+        run: npm ci
+      - if: steps.changed.outputs.run == 'true'
+        run: npm run typecheck
+      - if: steps.changed.outputs.run == 'true'
+        run: npm test
+      # tauri's build script needs the built frontend (frontendDist) to exist.
+      - if: steps.changed.outputs.run == 'true'
+        run: npm run build
+      - if: steps.changed.outputs.run == 'true'
+        run: cargo test
         working-directory: src-tauri

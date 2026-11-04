@@ -16,7 +16,7 @@ chrono = "0.4.45"
 encoding_rs = "0.8.42"
 futures = "0.3.34"
 html-escape = "0.3.0"
-keyring = { version = "3", features = ["apple-native", "linux-native"] }
+keyring = { version = "3", features = ["apple-native", "windows-native", "linux-native"] }
 log = "0.4.34"
 mail-builder = "2.0.0"
 rand = "0.10.3"

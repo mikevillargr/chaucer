@@ -1,7 +1,11 @@
-# Release candidate build: universal dmg + signed update feed, published as a draft release.
-# Runs only for version tags (vX.Y.Z) or by hand: day-to-day commits are tested by ci.yml on
-# Linux, so the slow macOS queue is used once per release (see AGENTS.md, Releases).
-name: Release (macOS)
+# Release candidate build: macOS universal dmg + Windows NSIS installer, one signed update feed
+# (latest.json), published as a draft release.
+# Runs only for version tags (vX.Y.Z) or by hand: day-to-day commits are tested by ci.yml, so the
+# slow macOS queue and the Windows build are used once per release (see AGENTS.md, Releases).
+#
+# build-macos and build-windows run in parallel and upload their release files as artifacts;
+# publish (tags only) collects both, writes latest.json and creates the draft release.
+name: Release
 
 on:
   push:
@@ -13,10 +17,10 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
+  build-macos:
     runs-on: macos-14
     permissions:
-      contents: write
+      contents: read
     steps:
       - uses: actions/checkout@v5
 
@@ -77,10 +81,125 @@ jobs:
           done
           exit 1
 
-      # Tag pushes (vX.Y.Z) create a draft release whose notes are that version's
-      # CHANGELOG.md section; a missing section fails the build (see docs/RELEASING.md).
-      - name: Draft release (tags only)
+      # Collect what the publish job needs: the dmg, plus the update archive and its signature
+      # (the archive only exists when the build was signed, i.e. always on tags).
+      - name: Stage release files
+        run: |
+          version=$(node -p 'require("./package.json").version')
+          bundle=src-tauri/target/universal-apple-darwin/release/bundle
+          mkdir -p dist
+          cp "$bundle"/dmg/*.dmg dist/
+          if [ -f "$bundle/macos/Chaucer.app.tar.gz" ]; then
+            cp "$bundle/macos/Chaucer.app.tar.gz" "dist/Chaucer_${version}_universal.app.tar.gz"
+            cp "$bundle/macos/Chaucer.app.tar.gz.sig" "dist/Chaucer_${version}_universal.app.tar.gz.sig"
+          fi
+          ls -l dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-macos
+          path: dist/*
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Chaucer-dmg
+          path: src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
+          if-no-files-found: error
+
+  build-windows:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      # Same rule as macOS. Windows checkouts may use CRLF, hence the `tr`.
+      - name: Check tag matches app version (tags only)
         if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg=$(node -p 'require("./package.json").version')
+          conf=$(node -p 'require("./src-tauri/tauri.conf.json").version')
+          cargo=$(sed -n 's/^version = "\(.*\)"/\1/p' src-tauri/Cargo.toml | head -1 | tr -d '\r')
+          echo "tag=$tag package.json=$pkg tauri.conf.json=$conf Cargo.toml=$cargo"
+          [ "$tag" = "$pkg" ] && [ "$tag" = "$conf" ] && [ "$tag" = "$cargo" ] || { echo "Version mismatch" >&2; exit 1; }
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+      # Per-user NSIS installer (tauri.windows.conf.json), unsigned (SmartScreen warns). The
+      # setup.exe is also the update payload: it is signed with the updater key and the .sig is
+      # published next to it. Same rule as macOS: without the key, ordinary builds skip update
+      # artifacts, but release tags fail.
+      - name: Build installer
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          extra=""
+          if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+              echo "TAURI_SIGNING_PRIVATE_KEY secret is missing: release builds must be signed for updates" >&2
+              exit 1
+            fi
+            echo "No updater signing key; building without update artifacts"
+            # A file, not inline JSON: quotes do not survive npm -> cmd.exe on Windows.
+            echo '{"bundle":{"createUpdaterArtifacts":false}}' > "$RUNNER_TEMP/no-updater.conf.json"
+            extra="--config $RUNNER_TEMP/no-updater.conf.json"
+          fi
+          npm run tauri build -- $extra
+
+      - name: Stage release files
+        run: |
+          version=$(node -p 'require("./package.json").version')
+          bundle=src-tauri/target/release/bundle/nsis
+          mkdir -p dist
+          cp "$bundle/Chaucer_${version}_x64-setup.exe" dist/
+          if [ -f "$bundle/Chaucer_${version}_x64-setup.exe.sig" ]; then
+            cp "$bundle/Chaucer_${version}_x64-setup.exe.sig" dist/
+          fi
+          ls -l dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-windows
+          path: dist/*
+          if-no-files-found: error
+
+  # Tag pushes (vX.Y.Z) create a draft release whose notes are that version's CHANGELOG.md
+  # section; a missing section fails the build (see docs/RELEASING.md).
+  publish:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [build-macos, build-windows]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: dist
+          merge-multiple: true
+
+      - name: Draft release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -93,28 +212,37 @@ jobs:
             echo "CHANGELOG.md has no section for $version" >&2
             exit 1
           fi
-          # In-app update feed: the app reads releases/latest/download/latest.json.
-          bundle=src-tauri/target/universal-apple-darwin/release/bundle
-          archive="Chaucer_${version}_universal.app.tar.gz"
-          cp "$bundle/macos/Chaucer.app.tar.gz" "$archive"
-          cp "$bundle/macos/Chaucer.app.tar.gz.sig" "$archive.sig"
-          VERSION="$version" ARCHIVE="$archive" node -e '
+
+          ls -l dist
+          mac="Chaucer_${version}_universal.app.tar.gz"
+          win="Chaucer_${version}_x64-setup.exe"
+          for f in "$mac" "$mac.sig" "$win" "$win.sig"; do
+            [ -f "dist/$f" ] || { echo "Missing release file dist/$f" >&2; exit 1; }
+          done
+          dmgs=(dist/*.dmg)
+          [ "${#dmgs[@]}" -eq 1 ] && [ -f "${dmgs[0]}" ] || { echo "Expected exactly one dmg in dist/" >&2; exit 1; }
+          case "${dmgs[0]}" in *"_${version}_"*) ;; *) echo "dmg name does not contain $version" >&2; exit 1 ;; esac
+
+          # In-app update feed: the app reads releases/latest/download/latest.json. macOS entries
+          # point at the .app.tar.gz, Windows at the NSIS setup.exe (the updater runs it).
+          VERSION="$version" MAC="$mac" WIN="$win" node -e '
             const fs = require("fs");
-            const url = `https://github.com/${process.env.GITHUB_REPOSITORY}/releases/download/${process.env.GITHUB_REF_NAME}/${process.env.ARCHIVE}`;
-            const signature = fs.readFileSync(process.env.ARCHIVE + ".sig", "utf8").trim();
-            const platform = { signature, url };
+            const base = `https://github.com/${process.env.GITHUB_REPOSITORY}/releases/download/${process.env.GITHUB_REF_NAME}`;
+            const entry = (file) => ({
+              signature: fs.readFileSync(`dist/${file}.sig`, "utf8").trim(),
+              url: `${base}/${file}`,
+            });
+            const mac = entry(process.env.MAC);
+            const win = entry(process.env.WIN);
             fs.writeFileSync("latest.json", JSON.stringify({
               version: process.env.VERSION,
               notes: fs.readFileSync("release-notes.md", "utf8").trim(),
               pub_date: new Date().toISOString(),
-              platforms: { "darwin-aarch64": platform, "darwin-x86_64": platform },
+              platforms: { "darwin-aarch64": mac, "darwin-x86_64": mac, "windows-x86_64": win },
             }, null, 2));
           '
-          gh release create "$GITHUB_REF_NAME" --draft --title "Chaucer $GITHUB_REF_NAME" \
-            --notes-file release-notes.md "$bundle"/dmg/*.dmg "$archive" "$archive.sig" latest.json
+          cat latest.json
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Chaucer-dmg
-          path: src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
-          if-no-files-found: error
+          gh release create "$GITHUB_REF_NAME" --draft --title "Chaucer $GITHUB_REF_NAME" \
+            --notes-file release-notes.md "${dmgs[0]}" \
+            "dist/$mac" "dist/$mac.sig" "dist/$win" "dist/$win.sig" latest.json

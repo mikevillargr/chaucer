@@ -1,5 +1,5 @@
 //! Files in the app data directory: the Google OAuth client and user preferences.
-//! Secrets (refresh tokens, LLM keys) live in the Keychain instead; see `secrets`.
+//! Secrets (refresh tokens, LLM keys) live in the OS credential store instead; see `secrets`.
 
 use crate::error::Result;
 use serde::{Deserialize, Serialize};

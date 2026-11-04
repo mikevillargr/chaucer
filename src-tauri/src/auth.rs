@@ -1,5 +1,5 @@
 //! Google OAuth 2.0 for installed apps: PKCE, system browser, loopback redirect.
-//! Refresh tokens are kept in the Keychain; access tokens only in memory.
+//! Refresh tokens are kept in the OS credential store; access tokens only in memory.
 
 use crate::config::GoogleClient;
 use crate::error::{Error, Result};

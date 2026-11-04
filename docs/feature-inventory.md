@@ -73,6 +73,14 @@ Legend: `[ ]` to do · `[x]` done · API = Gmail API v1 unless noted.
 - [ ] Default mail app / `mailto:` handler
 - [ ] Menu bar commands mirroring the shortcuts below
 
+## Windows integration
+- [ ] Frameless window with minimise / maximise-restore / close; double-click the top bar to maximise
+- [ ] Native toast notifications for new Inbox mail
+- [ ] Taskbar icon shows a dot while Inbox unread > 0, clears at 0
+- [ ] Default mail app / `mailto:` handler (installer registers it; Windows Settings → Default apps to choose)
+- [ ] Shortcuts use Ctrl (Ctrl+R refresh, Ctrl+Enter send, Ctrl+S save draft); Ctrl+R/P don't trigger WebView2's reload/print
+- [ ] Credentials survive a restart (Windows Credential Manager)
+
 ## Keyboard shortcuts (from `gmail_shortcut_*`, mapped to Gmail web keys)
 `c` compose · `r` reply · `a` reply all · `f` forward · `e` archive · `#` delete ·
 `!` spam · `s` star · `Shift+i` read · `Shift+u` unread · `j`/`k` next/prev ·

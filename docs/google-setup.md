@@ -24,5 +24,7 @@ and Google. You do this once; the app then remembers the client.
 Workspace accounts: if your admin restricts third-party apps, they must allow this OAuth client
 (Admin console → Security → API controls → App access control).
 
-The client ID/secret are saved in `~/Library/Application Support/com.mikevillargr.chaucer/
-google-client.json`; refresh tokens and AI keys are saved in the macOS Keychain.
+The client ID/secret are saved in `google-client.json` in the app data folder
+(`~/Library/Application Support/com.mikevillargr.chaucer/` on macOS,
+`%APPDATA%\com.mikevillargr.chaucer\` on Windows); refresh tokens and AI keys are saved in the
+macOS Keychain or Windows Credential Manager.

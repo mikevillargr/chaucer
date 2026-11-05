@@ -5,6 +5,27 @@ All notable changes to Chaucer. Versions follow [Semantic Versioning](https://se
 **MINOR** for new features, **PATCH** for fixes. Each GitHub release uses its section below as
 its release notes (see [docs/RELEASING.md](https://github.com/mikevillargr/chaucer/blob/main/docs/RELEASING.md)).
 
+## [Unreleased]
+
+### Windows
+- **Chaucer now runs on Windows 10 and 11.** Download `Chaucer_X.Y.Z_x64-setup.exe` from the
+  Releases page and run it: it installs just for you, with no administrator prompt. Windows
+  SmartScreen may warn the first time because the installer isn't code-signed; choose
+  **More info → Run anyway**. Chaucer updates itself afterwards, as on the Mac.
+- **Made for Windows.** The window has its own minimise, maximise and close buttons; shortcuts
+  show as Ctrl+R, Ctrl+Shift+Enter and so on; unread mail shows as a dot on the taskbar icon;
+  new-mail alerts use Windows notifications (tune them in Windows Settings → System →
+  Notifications); and Chaucer can be chosen as the app for `mailto:` links.
+- **Sign-ins and AI keys are kept in Windows Credential Manager.** Attachments with names that
+  Windows doesn't allow (like `CON.txt`) now open correctly.
+
+### Mail
+- **Clearer conversations.** Each message in a thread now sits on its own card, so it is easy
+  to see where one message ends and the next begins, in light and dark themes.
+
+### Fixes
+- Wording that said "this Mac" now says "this computer".
+
 ## [1.6.1] - 2026-10-30
 
 ### Fixes

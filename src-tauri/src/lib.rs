@@ -56,6 +56,24 @@ impl App {
     }
 }
 
+/// Turns off WebView2's own shortcuts (Ctrl+R reload, Ctrl+F find, Ctrl+P print, zoom, ...) so
+/// they reach the app's key handlers instead. Copy, paste and undo are not affected.
+#[cfg(windows)]
+fn disable_browser_accelerators(webview: tauri::webview::PlatformWebview) {
+    use webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2Settings3;
+    use windows_core::Interface;
+    // SAFETY: called on the main thread by `with_webview`, on a live controller.
+    unsafe {
+        if let Ok(core) = webview.controller().CoreWebView2() {
+            if let Ok(settings) = core.Settings() {
+                if let Ok(settings) = settings.cast::<ICoreWebView2Settings3>() {
+                    let _ = settings.SetAreBrowserAcceleratorKeysEnabled(false);
+                }
+            }
+        }
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -102,6 +120,11 @@ pub fn run() {
                 }
             });
 
+            #[cfg(windows)]
+            if let Some(w) = app.get_webview_window("main") {
+                let _ = w.with_webview(disable_browser_accelerators);
+            }
+
             sync::start(app.handle().clone(), state);
             Ok(())
         })
@@ -111,6 +134,7 @@ pub fn run() {
             commands::add_account,
             commands::remove_account,
             commands::sync_now,
+            commands::initial_mailto,
             commands::get_prefs,
             commands::set_prefs,
             commands::list_labels,

@@ -44,6 +44,7 @@ export const api = {
   addAccount: (loginHint?: string) => call<Account>("add_account", { loginHint }),
   removeAccount: (accountId: string) => call<void>("remove_account", { accountId }),
   syncNow: () => call<void>("sync_now"),
+  initialMailto: () => call<string | null>("initial_mailto"),
   getPrefs: () => call<Prefs>("get_prefs"),
   setPrefs: (patch: Partial<Prefs> | Record<string, unknown>) => call<Prefs>("set_prefs", { patch }),
 

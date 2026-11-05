@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { confirmDialog, Icon, IconButton, Spinner } from "../../components/ui";
+import { credentialStore, credentialStorePlain, credentialStoreShort } from "../../lib/platform";
 import { api } from "../../lib/ipc";
 import { usePrefs, useProviders, useSetPrefs } from "../../lib/queries";
 import { useUi } from "../../lib/store";
@@ -51,10 +52,10 @@ function ProviderForm({ initial, onDone }: { initial?: ProviderInfo; onDone: () 
         )}
         <label>Model</label><input className="input" value={p.model} onChange={(e) => setP({ ...p, model: e.target.value })} />
         <label>API key</label>
-        <input className="input" type="password" autoComplete="off" placeholder={initial?.hasKey ? "Saved in Keychain — leave blank to keep" : kind.keyHint}
+        <input className="input" type="password" autoComplete="off" placeholder={initial?.hasKey ? `Saved in ${credentialStoreShort()} — leave blank to keep` : kind.keyHint}
           value={key} onChange={(e) => setKey(e.target.value)} />
       </div>
-      <p className="muted" style={{ fontSize: 12 }}>Keys are stored in your macOS Keychain and only sent to the provider you choose. Smart features send the conversation's text to that provider.</p>
+      <p className="muted" style={{ fontSize: 12 }}>Keys are stored in {credentialStore()} and only sent to the provider you choose. Smart features send the conversation's text to that provider.</p>
       <div className="row-actions">
         <button className="btn filled" onClick={() => void save()} disabled={!p.model.trim() || !p.name.trim()}>Save</button>
         <button className="btn text" onClick={onDone}>Cancel</button>
@@ -100,7 +101,7 @@ export function SmartSettings() {
             <button className="btn text" onClick={() => void test(p)} disabled={testing === p.id}>{testing === p.id ? <Spinner /> : "Test"}</button>
             <IconButton icon="edit" label={`Edit ${p.name}`} onClick={() => setEditing(p)} />
             <IconButton icon="delete" label={`Remove ${p.name}`} onClick={async () => {
-              if (!(await confirmDialog(`Remove ${p.name}?`, "Its API key is deleted from your Keychain.", "Remove"))) return;
+              if (!(await confirmDialog(`Remove ${p.name}?`, `Its API key is deleted from ${credentialStorePlain()}.`, "Remove"))) return;
               await api.llmDeleteProvider(p.id);
               void qc.invalidateQueries({ queryKey: ["providers"] });
             }} />

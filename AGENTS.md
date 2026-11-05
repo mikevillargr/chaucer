@@ -7,10 +7,10 @@ links, the Android APK, or the Growth Rocket design-system bundle.
 
 ## What Chaucer is
 
-A Mac desktop client for Gmail that follows the Android Gmail app feature for feature, built
+A desktop client (macOS and Windows) for Gmail that follows the Android Gmail app feature for feature, built
 with Tauri v2 (Rust core) + React/TypeScript, talking to the **public Gmail API** with the
-user's own Google OAuth client. Distributed as an ad-hoc signed universal `.dmg` on GitHub
-Releases; installed copies update themselves.
+user's own Google OAuth client. Distributed as an ad-hoc signed universal `.dmg` and an unsigned per-user NSIS
+`-setup.exe` on GitHub Releases; installed copies update themselves.
 
 ## Working agreement
 
@@ -42,18 +42,20 @@ These are the owner's standing instructions. Follow them unless told otherwise.
 | --- | --- |
 | `src-tauri/src/auth.rs` | OAuth 2.0 PKCE via the system browser and a loopback redirect; access-token refresh |
 | `src-tauri/src/gmail.rs` | Gmail API v1 + People API client; per-account quota limiter; rate-limit retries |
-| `src-tauri/src/sync.rs` | First sync, `history.list` polling (30s and on wake), notifications, dock badge |
+| `src-tauri/src/sync.rs` | First sync, `history.list` polling (30s and on wake), notifications, dock badge (taskbar overlay dot on Windows) |
 | `src-tauri/src/db.rs` | SQLite cache, label index, FTS5 offline search, contacts |
 | `src-tauri/src/parse.rs`, `mime.rs` | MIME part tree → model (charsets, inline images); outgoing message builder |
 | `src-tauri/src/llm.rs` | Bring-your-own-key AI providers (Anthropic, OpenAI, Gemini, OpenAI-compatible) |
 | `src-tauri/src/commands.rs` | Every command the UI can call; keep in sync with `src/lib/ipc.ts` |
-| `src-tauri/src/secrets.rs` | macOS Keychain (refresh tokens, AI keys); migrates the old "Letterbox" service name |
+| `src-tauri/src/secrets.rs` | OS credential store: macOS Keychain / Windows Credential Manager (refresh tokens, AI keys); migrates the old "Letterbox" service name |
+| `src-tauri/tauri.windows.conf.json`, `capabilities/windows.json` | Windows-only config merged over `tauri.conf.json`: NSIS target, frameless window; window-control permissions |
+| `src/lib/platform.ts`, `components/WindowControls.tsx` | Platform flag (`<html data-platform>`), shortcut/copy helpers, Windows title-bar buttons |
 | `src/lib/ipc.ts`, `ipc.mock.ts` | Typed command layer; the mock is an in-memory backend for the browser preview and tests |
 | `src/lib/queries.ts`, `store.ts` | React Query data hooks, optimistic updates + Undo; Zustand UI state |
 | `src/features/…` | mailbox, thread (reader, `EmailFrame` sanitiser), compose (incl. @mentions), settings, updates |
 | `src/styles/tokens.css`, `app.css` | Design tokens and all component styles (plain CSS, no framework) |
-| `.github/workflows/ci.yml` | Tests on Linux for PRs and `main` |
-| `.github/workflows/release.yml` | macOS universal build + signed update feed, version tags only |
+| `.github/workflows/ci.yml` | Tests on Linux and Windows for PRs and `main` |
+| `.github/workflows/release.yml` | `build-macos` + `build-windows` + `publish` (one `latest.json` with darwin and windows entries), version tags only |
 
 Secrets never cross into the webview: tokens and API keys stay in Rust and the Keychain.
 
@@ -71,6 +73,28 @@ scripts/dev/compose.sh run --rm --no-deps -w /app/src-tauri dev cargo test
 
 macOS apps can't be built on Linux. The dmg is built only by `release.yml` on GitHub's macOS
 runners (or locally on a Mac with `npm run tauri build`).
+
+### Windows (Mike's PC)
+
+The container rule above is for the Linux dev server only. On Mike's Windows PC (repo at
+`C:\Users\mike\code\chaucer`) work natively: Rust stable `x86_64-pc-windows-msvc` (rustup), VS Build
+Tools 2022 with the C++ workload, Node, WebView2 (already on Windows 11). Then `npm ci`,
+`npm run typecheck`, `npx vitest run`, `cargo test` in `src-tauri`, `npm run tauri build`
+(produces `src-tauri/target/release/bundle/nsis/Chaucer_X.Y.Z_x64-setup.exe`). `cargo`/`gh` may not
+be on a fresh shell's PATH: use `%USERPROFILE%\.cargo\bin`.
+
+- **Platform flag:** `src/lib/platform.ts` sets `<html data-platform="windows"|"mac">` once at
+  startup from the user agent (`?platform=windows` forces it in the browser preview and dev
+  builds, so the Windows layout can be checked on Linux). Anything that isn't Windows keeps the
+  original Mac-style UI. Use `formatShortcut()`/`hint()` for key labels and the helpers there for
+  platform-dependent copy; don't hard-code ⌘ or "Keychain" in the UI.
+- **Windows-only Rust** is `#[cfg(windows)]`/`target_os = "windows"` gated; the macOS path must not change.
+- Test a throwaway-signed build with `npx tauri signer generate -w %TEMP%\key` (never into the repo)
+  and `TAURI_SIGNING_PRIVATE_KEY`; the pubkey-mismatch warning is expected.
+- The NSIS installer registers the `mailto` scheme under `HKCU\Software\Classes\mailto`. Uninstall
+  test installs afterwards so Mike's mailto handling isn't left pointing at a test build.
+- **Mike's PC is his working machine.** Don't drive the desktop with synthetic mouse/keyboard input
+  or pop windows/toasts without asking: he may be presenting or on a call.
 
 ### Browser checks (Playwright container, against the preview)
 
@@ -124,6 +148,21 @@ Losing it means installed copies can't update until users hand-install a release
 - **Accessibility tooling:** axe can hang on the script-less email frames once other UI is
   layered on top; exclude `iframe` in later checks and keep a hard timeout.
 - **WKWebView** (the macOS webview) has no `window.prompt`; build inline UI instead.
+- **keyring v3 on Windows:** without the `windows-native` feature it compiles but silently uses an
+  in-memory mock store (nothing survives a restart). `secrets.rs` has an ignored cross-process test
+  (`CHAUCER_CRED_PHASE=write|read|delete cargo test --lib secrets -- --ignored`).
+- **Tauri config merging:** `tauri.windows.conf.json` is a JSON merge patch; arrays are replaced, so
+  the Windows `windows` array must repeat label/size/min size, not just `decorations`.
+- **Frameless Windows window:** native frame off, our own buttons (`WindowControls`), and drag via
+  `data-tauri-drag-region`. Permissions live in `capabilities/windows.json` (Windows-scoped).
+  Tauri 2.12 has no config for WebView2 accelerator keys; `lib.rs` turns them off through
+  `with_webview` so Ctrl+R/P reach the app. There is no numeric badge on Windows: the unread
+  indicator is a taskbar overlay dot.
+- **Builds dirty the tree:** `npm run tauri build` rewrites `src-tauri/Cargo.toml` features and
+  typecheck rewrites `tsconfig.tsbuildinfo`; don't commit either (`git checkout` them).
+- **Windows filenames:** attachment names go through `safe_filename` (reserved names, trailing dots).
+- **Tooling on Windows:** Claude Code's bash heredocs halve backslashes; write files with the editor
+  tool. Files check out with CRLF (autocrlf); edit scripts must preserve line endings and read/write UTF-8.
 - **Motion:** with View Transitions, don't also give the transitioning element a mount
   animation (it slides twice). Respect `prefers-reduced-motion`.
 - **TipTap:** keys the editor consumes (e.g. Escape closing the mention menu) arrive at React
@@ -132,6 +171,8 @@ Losing it means installed copies can't update until users hand-install a release
   `rustls`.
 - **CI:** macOS runners queue, sometimes for many minutes, and occasionally never start a job
   (re-run it). `hdiutil` sometimes fails with "Resource busy"; the build step retries.
+- **Signing (Windows):** the setup.exe is unsigned; SmartScreen shows "More info → Run anyway". Update
+  signatures (same key as macOS) are separate and unaffected.
 - **Signing:** builds are ad-hoc signed, not notarized. Manual installs need *Open Anyway*;
   in-app updates don't, but macOS may ask to allow Keychain access after each update.
 - **Shell:** `node -e '…'` inside single quotes breaks on apostrophes in the embedded text.

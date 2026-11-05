@@ -90,6 +90,15 @@ pub async fn remove_account(handle: AppHandle, app: S<'_>, account_id: String) -
     Ok(())
 }
 
+/// The `mailto:` link this process was launched with, if any. Windows and Linux pass it as the
+/// only command-line argument; macOS delivers links through the deep-link event instead.
+#[tauri::command]
+pub fn initial_mailto(handle: AppHandle) -> Option<String> {
+    use tauri_plugin_deep_link::DeepLinkExt;
+    let urls = handle.deep_link().get_current().ok()??;
+    urls.iter().find(|u| u.scheme() == "mailto").map(|u| u.to_string())
+}
+
 #[tauri::command]
 pub fn sync_now(app: S<'_>) {
     app.wake.notify_one();
@@ -297,6 +306,34 @@ pub async fn save_attachment(app: S<'_>, account_id: String, message_id: String,
     Ok(())
 }
 
+/// Makes an attachment name safe to write under the temp folder. Path separators and `:` are
+/// always replaced. With `windows` set, also replaces the characters Windows forbids, prefixes
+/// reserved device names (CON, NUL, COM1..., with or without extension), and drops trailing
+/// dots and spaces. Without it, behaviour is unchanged from before Windows support.
+pub(crate) fn safe_filename(name: &str, windows: bool) -> String {
+    let mut safe: String = name
+        .chars()
+        .map(|c| match c {
+            '/' | '\\' | ':' => '_',
+            '*' | '?' | '"' | '<' | '>' | '|' if windows => '_',
+            c if windows && c.is_control() => '_',
+            c => c,
+        })
+        .collect();
+    if windows {
+        safe.truncate(safe.trim_end_matches(['.', ' ']).len());
+        let stem = safe.split('.').next().unwrap_or("").trim_end().to_ascii_uppercase();
+        let reserved = matches!(stem.as_str(), "CON" | "PRN" | "AUX" | "NUL")
+            || ((stem.starts_with("COM") || stem.starts_with("LPT"))
+                && stem.len() == 4
+                && matches!(stem.as_bytes()[3], b'1'..=b'9'));
+        if reserved {
+            safe.insert(0, '_');
+        }
+    }
+    if safe.is_empty() { "attachment".into() } else { safe }
+}
+
 /// Saves to a temp folder and opens with the default app (Preview, etc.).
 #[tauri::command]
 pub async fn open_attachment(handle: AppHandle, app: S<'_>, account_id: String, message_id: String, attachment_id: String, filename: String) -> Result<()> {
@@ -304,8 +341,7 @@ pub async fn open_attachment(handle: AppHandle, app: S<'_>, account_id: String, 
     let data = app.gmail(&account_id).await?.attachment(&message_id, &attachment_id).await?;
     let dir = std::env::temp_dir().join("chaucer-attachments").join(&message_id);
     std::fs::create_dir_all(&dir)?;
-    let safe: String = filename.chars().map(|c| if c == '/' || c == '\\' || c == ':' { '_' } else { c }).collect();
-    let path = dir.join(if safe.is_empty() { "attachment".into() } else { safe });
+    let path = dir.join(safe_filename(&filename, cfg!(windows)));
     std::fs::write(&path, data)?;
     handle.opener().open_path(path.to_string_lossy(), None::<&str>).map_err(|e| Error::other(e.to_string()))
 }
@@ -619,4 +655,37 @@ pub async fn help_write(app: S<'_>, instruction: String, draft: String, account_
         }
     }
     run_feature(&app, "write", llm::WRITE_SYSTEM, &prompt).await
+}
+
+#[cfg(test)]
+mod filename_tests {
+    use super::safe_filename;
+
+    #[test]
+    fn unchanged_off_windows() {
+        assert_eq!(safe_filename("a/b\\c:d.pdf", false), "a_b_c_d.pdf");
+        assert_eq!(safe_filename("CON", false), "CON");
+        assert_eq!(safe_filename("what?.txt.", false), "what?.txt.");
+        assert_eq!(safe_filename("", false), "attachment");
+    }
+
+    #[test]
+    fn windows_reserved_names() {
+        for n in ["CON", "con.txt", "Nul.tar.gz", "PRN", "aux.pdf", "COM1", "com9.txt", "LPT1", "lpt9.log"] {
+            assert_eq!(safe_filename(n, true), format!("_{n}"), "{n}");
+        }
+        for n in ["COM0", "COM10", "LPT0", "console.txt", "xcon.txt", "com.txt", "report.con"] {
+            assert_eq!(safe_filename(n, true), n, "{n}");
+        }
+        assert_eq!(safe_filename("CON .txt", true), "_CON .txt");
+    }
+
+    #[test]
+    fn windows_trailing_dots_spaces_and_forbidden_chars() {
+        assert_eq!(safe_filename("report.pdf. . ", true), "report.pdf");
+        assert_eq!(safe_filename("a*b?c\"d<e>f|g.txt", true), "a_b_c_d_e_f_g.txt");
+        assert_eq!(safe_filename("tab\there.txt", true), "tab_here.txt");
+        assert_eq!(safe_filename("...", true), "attachment");
+        assert_eq!(safe_filename("nul.", true), "_nul");
+    }
 }

@@ -211,8 +211,31 @@ fn notify(handle: &AppHandle, app: &App, account: &str, threads: &[ThreadSummary
 pub fn update_badge(handle: &AppHandle, app: &App) {
     let total = app.db.inbox_unread_total().unwrap_or(0);
     if let Some(w) = handle.get_webview_window("main") {
+        #[cfg(not(target_os = "windows"))]
         let _ = w.set_badge_count((total > 0).then_some(total));
+        // Windows has no numeric badge: show a small accent dot on the taskbar icon instead.
+        #[cfg(target_os = "windows")]
+        {
+            let icon = (total > 0).then(unread_dot);
+            let _ = w.set_overlay_icon(icon);
+        }
     }
+}
+
+/// A 32x32 accent-coloured dot (#f58d49, anti-aliased) for the Windows taskbar overlay.
+#[cfg(target_os = "windows")]
+fn unread_dot() -> tauri::image::Image<'static> {
+    const N: u32 = 32;
+    let (c, r) = ((N as f32 - 1.0) / 2.0, N as f32 / 2.0 - 2.0);
+    let mut px = Vec::with_capacity((N * N * 4) as usize);
+    for y in 0..N {
+        for x in 0..N {
+            let d = ((x as f32 - c).powi(2) + (y as f32 - c).powi(2)).sqrt();
+            let a = (r + 0.5 - d).clamp(0.0, 1.0);
+            px.extend_from_slice(&[0xf5, 0x8d, 0x49, (a * 255.0) as u8]);
+        }
+    }
+    tauri::image::Image::new_owned(px, N, N)
 }
 
 /// One pass over every signed-in account.

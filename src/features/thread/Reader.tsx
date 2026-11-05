@@ -1,4 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
+import { hint } from "../../lib/platform";
 import { readableOn } from "../../lib/color";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Avatar, confirmDialog, Icon, IconButton, Menu, Spinner } from "../../components/ui";
@@ -300,7 +301,7 @@ export function Reader() {
           <IconButton icon="report" label="Report spam (!)" onClick={() => void leave(run("spam", [ref]))} />
         )}
         {!inTrash && <IconButton icon="delete" label="Delete (#)" onClick={() => void leave(confirmed.trash([ref]))} />}
-        <IconButton icon="mark_email_unread" label="Mark as unread (⇧U)" onClick={() => void run("unread", [ref]).then(() => select(null))} />
+        <IconButton icon="mark_email_unread" label={`Mark as unread ${hint("Shift+U")}`} onClick={() => void run("unread", [ref]).then(() => select(null))} />
         <IconButton icon="drive_file_move" label="Move to" onClick={(e) => setMenu({ el: e.currentTarget as HTMLElement, mode: "move" })} />
         <IconButton icon="label" label="Label as" onClick={(e) => setMenu({ el: e.currentTarget as HTMLElement, mode: "label" })} />
         <IconButton icon="more_vert" label="More" onClick={(e) => setMenu({ el: e.currentTarget as HTMLElement, mode: "more" })} />

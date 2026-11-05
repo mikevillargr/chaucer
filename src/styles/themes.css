@@ -344,9 +344,9 @@
 :root[data-family="terminal"] .compose-fab .ms, :root[data-family="terminal"] .btn.filled .ms { text-shadow: none; }
 
 /* No rounded anything. Avatars, buttons, switches and menus all go square. */
-:root[data-family="kinetic"] :is(.btn, .compose-fab, .icon-btn, .tab, .search, .avatar, .menu, .dialog, .compose, .card, .toast, .update-card, .input, .setting select, .list-pane, .reader, .settings-main,
+:root[data-family="kinetic"] :is(.btn, .compose-fab, .icon-btn, .tab, .search, .avatar, .menu, .dialog, .compose, .card, .msg, .toast, .update-card, .input, .setting select, .list-pane, .reader, .settings-main,
   .row .check, .row.unread::after, .hover-actions, .nav-item, .account-btn, .mention-menu, .search-pop, .suggest, .update-progress, .switch, .switch::after, .banner, .label-dot, .skeleton i, .scrim, .attachment),
-:root[data-family="terminal"] :is(.btn, .compose-fab, .icon-btn, .tab, .chip, .search, .avatar, .menu, .dialog, .compose, .card, .toast, .update-card, .input, .setting select, .list-pane, .reader, .settings-main,
+:root[data-family="terminal"] :is(.btn, .compose-fab, .icon-btn, .tab, .chip, .search, .avatar, .menu, .dialog, .compose, .card, .msg, .toast, .update-card, .input, .setting select, .list-pane, .reader, .settings-main,
   .row .check, .row.unread::after, .hover-actions, .nav-item, .account-btn, .mention-menu, .search-pop, .suggest, .update-progress, .switch, .switch::after, .banner, .label-dot, .skeleton i, .scrim,
   .msg-body iframe, .editor .tiptap a.mention, .attachment) { border-radius: 0 !important; }   /* several of these are set by compound selectors such as .app.no-reader .list-pane */
 :root[data-family="kinetic"] .msg-body iframe, :root[data-family="kinetic"] .editor .tiptap a.mention { border-radius: 0; }

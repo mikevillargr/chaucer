@@ -5,7 +5,7 @@ All notable changes to Chaucer. Versions follow [Semantic Versioning](https://se
 **MINOR** for new features, **PATCH** for fixes. Each GitHub release uses its section below as
 its release notes (see [docs/RELEASING.md](https://github.com/mikevillargr/chaucer/blob/main/docs/RELEASING.md)).
 
-## [Unreleased]
+## [1.6.2] - 2026-11-05
 
 ### Fixes
 - **Links in emails open in your browser again on the Mac.** Clicking a link in a message did
@@ -161,6 +161,7 @@ the Android Gmail app and built on the public Gmail API.
 - The app isn't notarized: approve it once in System Settings → Privacy & Security.
 - You need your own Google Cloud OAuth client; see [docs/google-setup.md](https://github.com/mikevillargr/chaucer/blob/main/docs/google-setup.md).
 
+[1.6.2]: https://github.com/mikevillargr/chaucer/releases/tag/v1.6.2
 [1.6.1]: https://github.com/mikevillargr/chaucer/releases/tag/v1.6.1
 [1.6.0]: https://github.com/mikevillargr/chaucer/releases/tag/v1.6.0
 [1.5.0]: https://github.com/mikevillargr/chaucer/releases/tag/v1.5.0

@@ -233,14 +233,20 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 650; letter-spacing:
 .thread-title { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
 .thread-title h1 { font-size: 24px; line-height: 30px; margin: 0; flex: 1; color: var(--on-surface); }
 .thread-title .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
-.msg { border-bottom: 1px solid var(--outline-variant); padding: 16px 0; }
-.msg:last-child { border-bottom: 0; }
+/* Each message is its own card so a thread reads as separate messages, in light and dark.
+   --msg-edge is stronger than the --outline-variant hairline, which disappears in dark mode. */
+.msg {
+  --msg-edge: color-mix(in srgb, var(--outline) 45%, transparent);
+  background: var(--surface); border: 1px solid var(--msg-edge); border-radius: 14px;
+  padding: 14px 16px; margin-bottom: 10px;
+}
 .msg-head { display: grid; grid-template-columns: 36px 1fr auto; gap: 12px; align-items: start; }
 .msg-head .name { font-weight: 600; }
 .msg-head .email { color: var(--on-surface-variant); font-size: 12px; margin-left: 4px; }
 .msg-head .to { color: var(--on-surface-variant); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .msg-head .meta { display: flex; align-items: center; gap: 2px; color: var(--on-surface-variant); font: 500 11px var(--font-mono); letter-spacing: 0.02em; }
-.msg.collapsed { cursor: default; padding: 12px 0; }
+.msg.collapsed { cursor: pointer; padding: 10px 16px; transition: background-color 0.2s; }
+.msg.collapsed:hover { background: var(--hover); }
 .msg.collapsed .snippet { color: var(--on-surface-variant); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .msg-body { margin: 14px 0 0 48px; }
 .msg-body iframe { border: 0; display: block; border-radius: 10px; padding: 8px 12px; box-sizing: content-box; width: calc(100% - 24px); }
@@ -251,7 +257,7 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 650; letter-spacing:
 .appearance-toggle .btn { height: 26px; font-size: 12px; padding: 0 8px; color: var(--on-surface-variant); }
 .appearance-toggle .btn .ms { font-size: 16px; }
 .msg-body .plain { white-space: pre-wrap; word-wrap: break-word; font-size: 14px; line-height: 21px; }
-.collapsed-group { display: flex; align-items: center; gap: 8px; margin: 4px 0; color: var(--on-surface-variant); }
+.collapsed-group { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; color: var(--on-surface-variant); }
 .collapsed-group::before, .collapsed-group::after { content: ""; flex: 1; border-top: 1px solid var(--outline-variant); }
 .collapsed-group button { border: 1px solid var(--outline-variant); background: var(--surface); border-radius: var(--r-pill); height: 28px; padding: 0 12px; font-size: 12px; }
 .images-blocked { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--on-surface-variant); margin: 0 0 8px; }

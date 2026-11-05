@@ -19,6 +19,10 @@ its release notes (see [docs/RELEASING.md](https://github.com/mikevillargr/chauc
 - **Sign-ins and AI keys are kept in Windows Credential Manager.** Attachments with names that
   Windows doesn't allow (like `CON.txt`) now open correctly.
 
+### Mail
+- **Clearer conversations.** Each message in a thread now sits on its own card, so it is easy
+  to see where one message ends and the next begins, in light and dark themes.
+
 ### Fixes
 - Wording that said "this Mac" now says "this computer".
 

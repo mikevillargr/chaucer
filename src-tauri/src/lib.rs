@@ -94,6 +94,30 @@ pub fn run() {
             });
             app.manage(state.clone());
 
+            // Built here rather than from the config so links in emails can be caught. WebKit
+            // doesn't run the reader's click listener inside the script-less email frame, so a
+            // click falls through to the link's target="_blank" popup, which lands here. A platform
+            // config whose window entry lacks `"create": false` makes Tauri build it already.
+            let config = app.config().app.windows.iter().find(|w| w.label == "main").cloned().ok_or_else(|| Error::other("no main window config"))?;
+            let handle = app.handle().clone();
+            if app.get_webview_window("main").is_none() {
+                tauri::WebviewWindowBuilder::from_config(app.handle(), &config)?
+                    .on_new_window(move |url, _| {
+                        use tauri_plugin_opener::OpenerExt;
+                        match url.scheme() {
+                            "http" | "https" => {
+                                let _ = handle.opener().open_url(url.as_str(), None::<&str>);
+                            }
+                            "mailto" => {
+                                let _ = handle.emit("open-mailto", url.as_str());
+                            }
+                            _ => {}
+                        }
+                        tauri::webview::NewWindowResponse::Deny
+                    })
+                    .build()?;
+            }
+
             use tauri_plugin_deep_link::DeepLinkExt;
             let handle = app.handle().clone();
             app.deep_link().on_open_url(move |event| {

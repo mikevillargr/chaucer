@@ -11,6 +11,14 @@ its release notes (see [docs/RELEASING.md](https://github.com/mikevillargr/chauc
 - **Links in emails open in your browser again on the Mac.** Clicking a link in a message did
   nothing; it now opens in your default browser, and email-address links start a new message.
 
+## [1.6.1] - 2026-10-30
+
+### Fixes
+- **No more stuck "Gmail returned 401" error.** When Gmail rejected Chaucer's saved sign-in
+  token, the error stayed on screen until you restarted the app. Chaucer now gets a fresh token
+  automatically and retries, so you shouldn't see it. It also stops trusting a saved token after
+  your Mac has been asleep.
+
 ## [1.6.0] - 2026-10-29
 
 ### Mail
@@ -153,6 +161,7 @@ the Android Gmail app and built on the public Gmail API.
 - The app isn't notarized: approve it once in System Settings → Privacy & Security.
 - You need your own Google Cloud OAuth client; see [docs/google-setup.md](https://github.com/mikevillargr/chaucer/blob/main/docs/google-setup.md).
 
+[1.6.1]: https://github.com/mikevillargr/chaucer/releases/tag/v1.6.1
 [1.6.0]: https://github.com/mikevillargr/chaucer/releases/tag/v1.6.0
 [1.5.0]: https://github.com/mikevillargr/chaucer/releases/tag/v1.5.0
 [1.4.0]: https://github.com/mikevillargr/chaucer/releases/tag/v1.4.0

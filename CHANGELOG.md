@@ -5,6 +5,12 @@ All notable changes to Chaucer. Versions follow [Semantic Versioning](https://se
 **MINOR** for new features, **PATCH** for fixes. Each GitHub release uses its section below as
 its release notes (see [docs/RELEASING.md](https://github.com/mikevillargr/chaucer/blob/main/docs/RELEASING.md)).
 
+## [Unreleased]
+
+### Fixes
+- **Links in emails open in your browser again on the Mac.** Clicking a link in a message did
+  nothing; it now opens in your default browser, and email-address links start a new message.
+
 ## [1.6.0] - 2026-10-29
 
 ### Mail

@@ -18,12 +18,14 @@ const MAX_QUEUE: usize = 500;
 const RETRY_WAITS: [u64; 3] = [2, 8, 30];
 
 static QUEUE: Mutex<Vec<Value>> = Mutex::new(Vec::new());
-static SCHEDULED: AtomicBool = AtomicBool::new(false);
+/// True while a flush task exists (sleeping or sending), so a backlog never starts concurrent senders.
+static SENDER_ACTIVE: AtomicBool = AtomicBool::new(false);
 
-/// Normalises an endpoint to `scheme://host[:port][/path]` without a trailing slash; None if it isn't http(s).
+/// Normalises an endpoint without a trailing slash; None unless it is https (http only for localhost / 127.0.0.1).
 pub fn clean_endpoint(raw: &str) -> Option<String> {
     let u = url::Url::parse(raw.trim()).ok()?;
-    if !matches!(u.scheme(), "http" | "https") || u.host_str().is_none() {
+    let local = matches!(u.host_str(), Some("localhost" | "127.0.0.1"));
+    if !(u.scheme() == "https" || (u.scheme() == "http" && local)) {
         return None;
     }
     Some(u.as_str().trim_end_matches('/').to_string())
@@ -46,11 +48,17 @@ fn event_id() -> String {
 /// The event for one AI call. Contains only the keys below.
 pub fn build_event(feature: &str, provider_kind: &str, model: &str, thread_id: &str, duration_ms: u64, ok: bool) -> Value {
     let group = group_key(thread_id);
+    let provider = match provider_kind {
+        "anthropic" | "openai" | "moonshot" => provider_kind,
+        _ => "other",
+    };
+    let model: String = model.trim().chars().take(64).collect();
+    let model = if model.is_empty() { "unknown".to_string() } else { model };
     json!({
         "v": 1, "id": event_id(), "ts": chrono::Utc::now().to_rfc3339(),
         "source": "chaucer", "kind": "call", "groupKey": group,
         "taskKind": if feature == "write" { "write" } else { "thread" },
-        "instance": { "id": format!("{group}:{feature}"), "model": model, "provider": provider_kind, "actorType": "model", "role": "lead" },
+        "instance": { "id": format!("{group}:{model}"), "model": model, "provider": provider, "actorType": "model", "role": "lead" },
         "stage": feature, "humans": [{ "role": "requested", "personId": "owner" }], "projectKey": "chaucer",
         "durationMs": duration_ms, "ok": ok,
     })
@@ -67,37 +75,42 @@ pub fn report(app: &crate::App, feature: &str, provider_kind: &str, model: &str,
             &fresh
         }
     };
-    enqueue(endpoint, build_event(feature, provider_kind, model, thread, duration_ms, ok));
+    enqueue(app.http.clone(), endpoint, build_event(feature, provider_kind, model, thread, duration_ms, ok));
 }
 
-fn enqueue(endpoint: String, event: Value) {
-    let Ok(mut q) = QUEUE.lock() else { return };
+/// Pushes onto the bounded queue (oldest dropped beyond the cap); returns the new length.
+fn push_capped(q: &mut Vec<Value>, event: Value) -> usize {
     q.push(event);
     if q.len() > MAX_QUEUE {
         let excess = q.len() - MAX_QUEUE;
         q.drain(..excess);
     }
-    let full = q.len() >= FLUSH_AT;
-    drop(q);
-    if full || !SCHEDULED.swap(true, Ordering::SeqCst) {
-        tauri::async_runtime::spawn(async move {
-            if !full {
-                tokio::time::sleep(FLUSH_EVERY).await;
-            }
-            SCHEDULED.store(false, Ordering::SeqCst);
-            flush(endpoint).await;
-        });
-    }
+    q.len()
 }
 
-async fn flush(endpoint: String) {
+fn enqueue(http: reqwest::Client, endpoint: String, event: Value) {
+    let Ok(mut q) = QUEUE.lock() else { return };
+    let len = push_capped(&mut q, event);
+    drop(q);
+    if SENDER_ACTIVE.swap(true, Ordering::SeqCst) {
+        return; // the running sender will pick this up
+    }
+    tauri::async_runtime::spawn(async move {
+        if len < FLUSH_AT {
+            tokio::time::sleep(FLUSH_EVERY).await;
+        }
+        flush(&http, &endpoint).await;
+        SENDER_ACTIVE.store(false, Ordering::SeqCst);
+    });
+}
+
+async fn flush(client: &reqwest::Client, endpoint: &str) {
     let Some(token) = secrets::get(secrets::ACTIVITY_TOKEN_KEY).ok().flatten().filter(|t| !t.is_empty()) else {
         if let Ok(mut q) = QUEUE.lock() {
             q.clear();
         }
         return;
     };
-    let Ok(client) = reqwest::Client::builder().timeout(Duration::from_secs(5)).build() else { return };
     loop {
         let batch: Vec<Value> = match QUEUE.lock() {
             Ok(mut q) => {
@@ -109,7 +122,7 @@ async fn flush(endpoint: String) {
         if batch.is_empty() {
             return;
         }
-        post_with_retry(&client, &endpoint, &token, &json!({ "events": batch })).await;
+        post_with_retry(client, endpoint, &token, &json!({ "events": batch })).await;
     }
 }
 
@@ -117,7 +130,7 @@ async fn flush(endpoint: String) {
 async fn post_with_retry(client: &reqwest::Client, endpoint: &str, token: &str, body: &Value) {
     let url = format!("{endpoint}/v1/ingest");
     for attempt in 0..=RETRY_WAITS.len() {
-        match client.post(&url).bearer_auth(token).json(body).send().await {
+        match client.post(&url).timeout(Duration::from_secs(5)).bearer_auth(token).json(body).send().await {
             Ok(r) if r.status().is_success() || (r.status().is_client_error() && r.status().as_u16() != 429) => return,
             _ => {}
         }
@@ -141,6 +154,8 @@ mod tests {
         assert_eq!(e["groupKey"].as_str().unwrap().len(), 16);
         assert_eq!(e["stage"], "summary");
         assert_eq!(e["instance"]["model"], "claude-sonnet-5-5");
+        assert_eq!(e["instance"]["provider"], "anthropic");
+        assert_eq!(e["instance"]["id"], format!("{}:claude-sonnet-5-5", e["groupKey"].as_str().unwrap()));
         assert_eq!(e["durationMs"], 840);
         assert_eq!(e["ok"], true);
         let mut keys: Vec<_> = e.as_object().unwrap().keys().cloned().collect();
@@ -164,21 +179,32 @@ mod tests {
         assert_eq!(clean_endpoint("not a url"), None);
         assert_eq!(clean_endpoint("ftp://example.com"), None);
         assert_eq!(clean_endpoint("https://example.com/"), Some("https://example.com".into()));
+        assert_eq!(clean_endpoint("http://example.com"), None);
+        assert_eq!(clean_endpoint("http://localhost:8080/"), Some("http://localhost:8080".into()));
+        assert_eq!(clean_endpoint("http://127.0.0.1:8080"), Some("http://127.0.0.1:8080".into()));
     }
 
     #[test]
-    fn enqueue_caps_the_queue_and_never_panics() {
-        // No runtime or token here: the queue must still stay bounded and nothing may panic.
-        for i in 0..(MAX_QUEUE + 50) {
-            if let Ok(mut q) = QUEUE.lock() {
-                q.push(build_event("write", "x", "m", &i.to_string(), 1, true));
-                if q.len() > MAX_QUEUE {
-                    let n = q.len() - MAX_QUEUE;
-                    q.drain(..n);
-                }
-            }
+    fn other_providers_and_odd_models_produce_a_valid_payload() {
+        for kind in ["gemini", "openai_compatible", "whatever"] {
+            let e = build_event("summary", kind, "llama3.3", "t", 5, true);
+            assert_eq!(e["instance"]["provider"], "other");
         }
-        assert!(QUEUE.lock().unwrap().len() <= MAX_QUEUE);
-        QUEUE.lock().unwrap().clear();
+        for kind in ["anthropic", "openai", "moonshot"] {
+            assert_eq!(build_event("write", kind, "m", "t", 5, true)["instance"]["provider"], kind);
+        }
+        assert_eq!(build_event("write", "gemini", "  ", "t", 5, true)["instance"]["model"], "unknown");
+        let long = "x".repeat(200);
+        assert_eq!(build_event("write", "gemini", &long, "t", 5, true)["instance"]["model"].as_str().unwrap().len(), 64);
+    }
+
+    #[test]
+    fn push_capped_drops_oldest() {
+        let mut q = Vec::new();
+        for i in 0..(MAX_QUEUE + 50) {
+            push_capped(&mut q, json!({ "n": i }));
+        }
+        assert_eq!(q.len(), MAX_QUEUE);
+        assert_eq!(q[0]["n"], 50);
     }
 }

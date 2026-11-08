@@ -102,6 +102,7 @@ seed(12, work, { name: "Growth Weekly", email: "news@growthweekly.example" }, "T
 
 let prefs: Prefs = {};
 const providers: ProviderInfo[] = [];
+const activity = { endpoint: "", hasToken: false };
 const recent: string[] = ["from:ana", "has:attachment invoice"];
 const listeners = new Map<string, Set<(p: unknown) => void>>();
 
@@ -215,6 +216,11 @@ const handlers: Record<string, (a: any) => unknown> = {
   },
   llm_delete_provider: ({ providerId }) => void providers.splice(providers.findIndex((p) => p.id === providerId), 1),
   llm_test: async () => (await wait(300), "OK"),
+  activity_get: () => activity,
+  activity_save: ({ endpoint, token }) => {
+    activity.endpoint = endpoint;
+    if (token !== undefined) activity.hasToken = token !== "";
+  },
   smart_replies: async () => (await wait(500), ["Sounds good, thanks!", "Let me take a look.", "Can we talk tomorrow?"]),
   summarize_thread: async () => (await wait(600),
     "• Ana approved the deck with two edits.\n• Move Striking Distance before AI Overviews; add Nevada week-over-week delta.\n• Send on Friday."),

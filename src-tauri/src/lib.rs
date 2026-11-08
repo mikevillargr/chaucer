@@ -1,3 +1,4 @@
+mod activity;
 mod auth;
 mod commands;
 mod config;
@@ -168,6 +169,8 @@ pub fn run() {
             commands::llm_save_provider,
             commands::llm_delete_provider,
             commands::llm_test,
+            commands::activity_get,
+            commands::activity_save,
             commands::smart_replies,
             commands::summarize_thread,
             commands::help_write,

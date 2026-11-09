@@ -1,0 +1,8 @@
+{
+  "worktree": {
+    "setup": [
+      "echo 'Chaucer worktree: read AGENTS.md first. Branch, commit and open a PR; release only when a batch is called a release candidate.'"
+    ],
+    "teardown": "if [ -x /workspace/orchestrator/scripts/worktree-teardown.sh ]; then /workspace/orchestrator/scripts/worktree-teardown.sh; fi"
+  }
+}

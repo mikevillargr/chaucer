@@ -6,20 +6,78 @@
 use crate::secrets;
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::collections::VecDeque;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
 use std::time::Duration;
+use tokio::sync::Notify;
 
 pub const ENDPOINT_PREF: &str = "activityEndpoint";
 const FLUSH_EVERY: Duration = Duration::from_secs(2);
 const FLUSH_AT: usize = 20;
 const MAX_BATCH: usize = 50;
+/// Events held anywhere: waiting, being sent, or waiting to retry.
 const MAX_QUEUE: usize = 500;
 const RETRY_WAITS: [u64; 3] = [2, 8, 30];
 
-static QUEUE: Mutex<Vec<Value>> = Mutex::new(Vec::new());
-/// True while a flush task exists (sleeping or sending), so a backlog never starts concurrent senders.
-static SENDER_ACTIVE: AtomicBool = AtomicBool::new(false);
+/// Local, metadata-only counters (never logged with an endpoint or token).
+#[derive(Default)]
+pub struct Counters {
+    pub send_errors: AtomicU64,
+    pub evicted: AtomicU64,
+    pub retries_exhausted: AtomicU64,
+    pub rejected: AtomicU64,
+}
+pub static COUNTERS: Counters = Counters {
+    send_errors: AtomicU64::new(0),
+    evicted: AtomicU64::new(0),
+    retries_exhausted: AtomicU64::new(0),
+    rejected: AtomicU64::new(0),
+};
+
+/// Everything shared between the AI call path and the single worker. Guarded by one mutex.
+struct State {
+    /// (endpoint, token): reporting is on only when both are set.
+    config: Option<(String, String)>,
+    next_seq: u64,
+    /// Every unsent event, oldest first, including the batch currently on the wire.
+    queue: VecDeque<(u64, Value)>,
+}
+
+static STATE: Mutex<State> = Mutex::new(State { config: None, next_seq: 0, queue: VecDeque::new() });
+static WAKE: Notify = Notify::const_new();
+
+impl State {
+    fn set_config(&mut self, config: Option<(String, String)>) {
+        if self.config != config {
+            self.queue.clear(); // never send queued events to a stale or disabled endpoint
+        }
+        self.config = config;
+    }
+
+    /// Adds an event, evicting the oldest beyond the cap. Returns the new length.
+    fn push(&mut self, event: Value) -> usize {
+        self.queue.push_back((self.next_seq, event));
+        self.next_seq += 1;
+        while self.queue.len() > MAX_QUEUE {
+            self.queue.pop_front();
+            COUNTERS.evicted.fetch_add(1, Ordering::Relaxed);
+        }
+        self.queue.len()
+    }
+
+    /// The oldest events (up to one POST) and the last one's sequence number.
+    fn front_batch(&self) -> Option<(Vec<Value>, u64)> {
+        let last = self.queue.iter().take(MAX_BATCH).last()?.0;
+        Some((self.queue.iter().take(MAX_BATCH).map(|(_, e)| e.clone()).collect(), last))
+    }
+
+    fn remove_through(&mut self, seq: u64) {
+        while self.queue.front().is_some_and(|(s, _)| *s <= seq) {
+            self.queue.pop_front();
+        }
+    }
+}
 
 /// Normalises an endpoint without a trailing slash; None unless it is https (http only for localhost / 127.0.0.1).
 pub fn clean_endpoint(raw: &str) -> Option<String> {
@@ -64,9 +122,24 @@ pub fn build_event(feature: &str, provider_kind: &str, model: &str, thread_id: &
     })
 }
 
-/// Queues one event if reporting is configured. Cheap and infallible; `thread_id` is hashed here.
-pub fn report(app: &crate::App, feature: &str, provider_kind: &str, model: &str, thread_id: Option<&str>, duration_ms: u64, ok: bool) {
-    let Some(endpoint) = app.cfg.pref(ENDPOINT_PREF).and_then(|v| v.as_str().and_then(clean_endpoint)) else { return };
+/// Sets the live configuration from the saved endpoint and Keychain token. Call at startup and on save.
+pub fn refresh_config(endpoint: &str) {
+    let token = secrets::get(secrets::ACTIVITY_TOKEN_KEY).ok().flatten().filter(|t| !t.trim().is_empty());
+    let config = match (clean_endpoint(endpoint), token) {
+        (Some(e), Some(t)) => Some((e, t)),
+        _ => None,
+    };
+    if let Ok(mut st) = STATE.lock() {
+        st.set_config(config);
+    }
+}
+
+/// Queues one event if reporting is fully configured. Cheap and infallible: no Keychain or disk access.
+pub fn report(feature: &str, provider_kind: &str, model: &str, thread_id: Option<&str>, duration_ms: u64, ok: bool) {
+    let Ok(mut st) = STATE.lock() else { return };
+    if st.config.is_none() {
+        return;
+    }
     let fresh;
     let thread = match thread_id {
         Some(t) => t,
@@ -75,69 +148,95 @@ pub fn report(app: &crate::App, feature: &str, provider_kind: &str, model: &str,
             &fresh
         }
     };
-    enqueue(app.http.clone(), endpoint, build_event(feature, provider_kind, model, thread, duration_ms, ok));
+    st.push(build_event(feature, provider_kind, model, thread, duration_ms, ok));
+    drop(st);
+    WAKE.notify_one();
 }
 
-/// Pushes onto the bounded queue (oldest dropped beyond the cap); returns the new length.
-fn push_capped(q: &mut Vec<Value>, event: Value) -> usize {
-    q.push(event);
-    if q.len() > MAX_QUEUE {
-        let excess = q.len() - MAX_QUEUE;
-        q.drain(..excess);
-    }
-    q.len()
-}
-
-fn enqueue(http: reqwest::Client, endpoint: String, event: Value) {
-    let Ok(mut q) = QUEUE.lock() else { return };
-    let len = push_capped(&mut q, event);
-    drop(q);
-    if SENDER_ACTIVE.swap(true, Ordering::SeqCst) {
-        return; // the running sender will pick this up
-    }
+/// Starts the one long-lived sender. Call once at startup, inside the async runtime's reach.
+pub fn start(http: reqwest::Client) {
     tauri::async_runtime::spawn(async move {
-        if len < FLUSH_AT {
-            tokio::time::sleep(FLUSH_EVERY).await;
+        loop {
+            WAKE.notified().await;
+            // Batch window: send after 2 s, or at once when 20 events are waiting.
+            let _ = tokio::time::timeout(FLUSH_EVERY, async {
+                while queue_len() < FLUSH_AT {
+                    WAKE.notified().await;
+                }
+            })
+            .await;
+            while send_front(&http).await {}
         }
-        flush(&http, &endpoint).await;
-        SENDER_ACTIVE.store(false, Ordering::SeqCst);
     });
 }
 
-async fn flush(client: &reqwest::Client, endpoint: &str) {
-    let Some(token) = secrets::get(secrets::ACTIVITY_TOKEN_KEY).ok().flatten().filter(|t| !t.is_empty()) else {
-        if let Ok(mut q) = QUEUE.lock() {
-            q.clear();
-        }
-        return;
-    };
-    loop {
-        let batch: Vec<Value> = match QUEUE.lock() {
-            Ok(mut q) => {
-                let n = q.len().min(MAX_BATCH);
-                q.drain(..n).collect()
-            }
-            Err(_) => return,
+fn queue_len() -> usize {
+    STATE.lock().map(|s| s.queue.len()).unwrap_or(0)
+}
+
+/// Sends the oldest batch with the retry policy. Returns false when there is nothing left to send.
+async fn send_front(http: &reqwest::Client) -> bool {
+    for attempt in 0..=RETRY_WAITS.len() {
+        // Re-read both each attempt: a save may have changed or cleared them while we waited.
+        let (config, batch) = match STATE.lock() {
+            Ok(st) => (st.config.clone(), st.front_batch()),
+            Err(_) => return false,
         };
-        if batch.is_empty() {
-            return;
+        let (Some((endpoint, token)), Some((events, last_seq))) = (config, batch) else { return false };
+        let outcome = post(http, &endpoint, &token, &events).await;
+        if outcome != Outcome::Retry {
+            if outcome == Outcome::Rejected {
+                COUNTERS.rejected.fetch_add(1, Ordering::Relaxed);
+            }
+            if let Ok(mut st) = STATE.lock() {
+                if st.config.as_ref().is_some_and(|(e, _)| *e == endpoint) {
+                    st.remove_through(last_seq);
+                }
+            }
+            return true;
         }
-        post_with_retry(client, endpoint, &token, &json!({ "events": batch })).await;
+        COUNTERS.send_errors.fetch_add(1, Ordering::Relaxed);
+        match RETRY_WAITS.get(attempt) {
+            Some(w) => tokio::time::sleep(Duration::from_secs(*w)).await,
+            None => {
+                COUNTERS.retries_exhausted.fetch_add(1, Ordering::Relaxed);
+                if let Ok(mut st) = STATE.lock() {
+                    st.remove_through(last_seq);
+                }
+                return true;
+            }
+        }
+    }
+    true
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum Outcome {
+    Done,
+    Retry,
+    Rejected,
+}
+
+/// Retry network errors, 429 and 5xx; drop every other HTTP response.
+fn classify(status: u16) -> Outcome {
+    match status {
+        200..=299 => Outcome::Done,
+        429 | 500..=599 => Outcome::Retry,
+        _ => Outcome::Rejected,
     }
 }
 
-/// Retries network errors, 429 and 5xx after 2 s, 8 s and 30 s, then drops the batch. 4xx other than 429 drops at once.
-async fn post_with_retry(client: &reqwest::Client, endpoint: &str, token: &str, body: &Value) {
-    let url = format!("{endpoint}/v1/ingest");
-    for attempt in 0..=RETRY_WAITS.len() {
-        match client.post(&url).timeout(Duration::from_secs(5)).bearer_auth(token).json(body).send().await {
-            Ok(r) if r.status().is_success() || (r.status().is_client_error() && r.status().as_u16() != 429) => return,
-            _ => {}
-        }
-        match RETRY_WAITS.get(attempt) {
-            Some(w) => tokio::time::sleep(Duration::from_secs(*w)).await,
-            None => return,
-        }
+async fn post(http: &reqwest::Client, endpoint: &str, token: &str, events: &[Value]) -> Outcome {
+    let sent = http
+        .post(format!("{endpoint}/v1/ingest"))
+        .timeout(Duration::from_secs(5))
+        .bearer_auth(token)
+        .json(&json!({ "events": events }))
+        .send()
+        .await;
+    match sent {
+        Ok(r) => classify(r.status().as_u16()),
+        Err(_) => Outcome::Retry,
     }
 }
 
@@ -198,13 +297,57 @@ mod tests {
         assert_eq!(build_event("write", "gemini", &long, "t", 5, true)["instance"]["model"].as_str().unwrap().len(), 64);
     }
 
+    fn on() -> State {
+        State { config: Some(("https://example.com".into(), "t".into())), next_seq: 0, queue: VecDeque::new() }
+    }
+
     #[test]
-    fn push_capped_drops_oldest() {
-        let mut q = Vec::new();
+    fn cap_includes_events_on_the_wire_and_evicts_oldest() {
+        let mut st = on();
         for i in 0..(MAX_QUEUE + 50) {
-            push_capped(&mut q, json!({ "n": i }));
+            st.push(json!({ "n": i }));
         }
-        assert_eq!(q.len(), MAX_QUEUE);
-        assert_eq!(q[0]["n"], 50);
+        assert_eq!(st.queue.len(), MAX_QUEUE);
+        // A batch "on the wire" is still part of the queue, so it counts toward the cap.
+        let (batch, last) = st.front_batch().unwrap();
+        assert_eq!(batch.len(), MAX_BATCH);
+        assert_eq!(batch[0]["n"], 50);
+        st.push(json!({ "n": "new" }));
+        assert_eq!(st.queue.len(), MAX_QUEUE);
+        st.remove_through(last); // eviction may have taken some already; removal stays correct
+        assert!(st.queue.iter().all(|(s, _)| *s > last));
+    }
+
+    #[test]
+    fn changing_or_disabling_config_clears_the_queue() {
+        let mut st = on();
+        st.push(json!({}));
+        st.set_config(Some(("https://example.com".into(), "t".into())));
+        assert_eq!(st.queue.len(), 1, "same config keeps events");
+        st.set_config(Some(("https://other.example.com".into(), "t".into())));
+        assert!(st.queue.is_empty(), "new endpoint must not receive old events");
+        st.push(json!({}));
+        st.set_config(None);
+        assert!(st.queue.is_empty());
+        assert!(st.config.is_none());
+    }
+
+    #[test]
+    fn retries_only_network_429_and_5xx() {
+        assert_eq!(classify(202), Outcome::Done);
+        for s in [400, 401, 402, 403, 404, 405, 413, 422] {
+            assert_eq!(classify(s), Outcome::Rejected, "{s}");
+        }
+        for s in [429, 500, 502, 503, 599] {
+            assert_eq!(classify(s), Outcome::Retry, "{s}");
+        }
+    }
+
+    #[test]
+    fn report_is_a_no_op_without_complete_config() {
+        // The global state is never configured by tests, so this must neither queue nor panic.
+        report("summary", "anthropic", "m", Some("t"), 1, true);
+        report("write", "x", "", None, u64::MAX, false);
+        assert_eq!(queue_len(), 0);
     }
 }

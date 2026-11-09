@@ -587,7 +587,7 @@ async fn run_feature(app: &App, feature: &str, thread_id: Option<&str>, system: 
     let key = secrets::get(&secrets::llm_key(&p.id))?;
     let started = std::time::Instant::now();
     let result = llm::complete(&app.http, &p, key.as_deref(), system, user).await;
-    activity::report(app, feature, &p.kind, &p.model, thread_id, started.elapsed().as_millis() as u64, result.is_ok());
+    activity::report(feature, &p.kind, &p.model, thread_id, started.elapsed().as_millis() as u64, result.is_ok());
     result
 }
 
@@ -611,7 +611,7 @@ pub fn activity_get(app: S<'_>) -> Result<ActivityConfig> {
 pub fn activity_save(app: S<'_>, endpoint: String, token: Option<String>) -> Result<()> {
     let endpoint = endpoint.trim();
     if !endpoint.is_empty() && activity::clean_endpoint(endpoint).is_none() {
-        return Err(Error::other("The endpoint must be an http(s) address"));
+        return Err(Error::other("The endpoint must be an https address (http only for localhost)"));
     }
     match token.as_deref() {
         Some("") => secrets::delete(secrets::ACTIVITY_TOKEN_KEY)?,
@@ -621,6 +621,7 @@ pub fn activity_save(app: S<'_>, endpoint: String, token: Option<String>) -> Res
     let mut patch = Map::new();
     patch.insert(activity::ENDPOINT_PREF.into(), Value::String(endpoint.into()));
     app.cfg.update_prefs(patch)?;
+    activity::refresh_config(endpoint);
     Ok(())
 }
 

@@ -94,6 +94,12 @@ pub fn run() {
                 limiters: Default::default(),
             });
             app.manage(state.clone());
+            activity::start(state.http.clone());
+            let saved = state.cfg.pref(activity::ENDPOINT_PREF).and_then(|v| v.as_str().map(String::from));
+            if let Some(endpoint) = saved.filter(|e| !e.is_empty()) {
+                // Off unless an endpoint is saved; the Keychain read stays off the startup path.
+                tauri::async_runtime::spawn_blocking(move || activity::refresh_config(&endpoint));
+            }
 
             // Built here rather than from the config so links in emails can be caught. WebKit
             // doesn't run the reader's click listener inside the script-less email frame, so a

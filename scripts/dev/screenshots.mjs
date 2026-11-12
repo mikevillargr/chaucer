@@ -1,6 +1,7 @@
 // Screenshots of the mock-backed preview, run inside the Playwright container:
-//   docker run --rm -v "$PWD:/app" -w /tmp mcr.microsoft.com/playwright:v1.56.0-noble \
-//     sh -c "npm i -s playwright@1.56.0 >/dev/null && node /app/scripts/dev/screenshots.mjs http://host:3010 /app/.shots"
+//   bash scripts/dev/screenshot-container.sh screenshots.mjs http://host:3010 /app/.shots
+// Set CHECK_SSH_HOST to an SSH config alias when running from Paseo.
+// CHECK_TIMEOUT defaults to 1200 seconds; cancellation removes the named container.
 import { chromium } from "playwright";
 
 const [url, out] = process.argv.slice(2);

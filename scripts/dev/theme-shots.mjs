@@ -1,6 +1,7 @@
 // Screenshots of each skin theme (kinetic, terminal-green, terminal-white) against the mock preview:
-//   docker run --rm -v "$PWD:/app" -w /tmp mcr.microsoft.com/playwright:v1.56.0-noble \
-//     sh -c "npm i -s playwright@1.56.0 >/dev/null && node /app/scripts/dev/theme-shots.mjs http://host:3010 /app/.shots"
+//   bash scripts/dev/screenshot-container.sh theme-shots.mjs http://host:3010 /app/.shots
+// Set CHECK_SSH_HOST to an SSH config alias when running from Paseo.
+// CHECK_TIMEOUT defaults to 1200 seconds; cancellation removes the named container.
 import { chromium } from "playwright";
 
 const [url, out] = process.argv.slice(2);

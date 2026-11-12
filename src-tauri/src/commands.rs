@@ -1,5 +1,6 @@
 //! Tauri commands: the webview's whole API. Keep in sync with `src/lib/ipc.ts`.
 
+use crate::activity;
 use crate::config::GoogleClient;
 use crate::error::{Error, Result};
 use crate::llm::{self, Provider};
@@ -576,7 +577,7 @@ pub fn llm_delete_provider(app: S<'_>, provider_id: String) -> Result<()> {
     Ok(())
 }
 
-async fn run_feature(app: &App, feature: &str, system: &str, user: &str) -> Result<String> {
+async fn run_feature(app: &App, feature: &str, thread_id: Option<&str>, system: &str, user: &str) -> Result<String> {
     let id = app
         .cfg
         .pref("llmFeatures")
@@ -584,7 +585,44 @@ async fn run_feature(app: &App, feature: &str, system: &str, user: &str) -> Resu
         .ok_or_else(|| Error::other("No provider is set for this feature. Choose one in Settings → Smart features."))?;
     let p = providers(app).into_iter().find(|p| p.id == id).ok_or_else(|| Error::other("The chosen provider was removed"))?;
     let key = secrets::get(&secrets::llm_key(&p.id))?;
-    llm::complete(&app.http, &p, key.as_deref(), system, user).await
+    let started = std::time::Instant::now();
+    let result = llm::complete(&app.http, &p, key.as_deref(), system, user).await;
+    activity::report(feature, &p.kind, &p.model, thread_id, started.elapsed().as_millis() as u64, result.is_ok());
+    result
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ActivityConfig {
+    pub endpoint: String,
+    pub has_token: bool,
+}
+
+#[tauri::command]
+pub fn activity_get(app: S<'_>) -> Result<ActivityConfig> {
+    Ok(ActivityConfig {
+        endpoint: app.cfg.pref(activity::ENDPOINT_PREF).and_then(|v| v.as_str().map(String::from)).unwrap_or_default(),
+        has_token: secrets::get(secrets::ACTIVITY_TOKEN_KEY)?.is_some(),
+    })
+}
+
+/// Reporting is on only while both are set. `token`: None keeps the stored token, "" removes it.
+#[tauri::command]
+pub fn activity_save(app: S<'_>, endpoint: String, token: Option<String>) -> Result<()> {
+    let endpoint = endpoint.trim();
+    if !endpoint.is_empty() && activity::clean_endpoint(endpoint).is_none() {
+        return Err(Error::other("The endpoint must be an https address (http only for localhost)"));
+    }
+    match token.as_deref() {
+        Some("") => secrets::delete(secrets::ACTIVITY_TOKEN_KEY)?,
+        Some(t) => secrets::set(secrets::ACTIVITY_TOKEN_KEY, t.trim())?,
+        None => {}
+    }
+    let mut patch = Map::new();
+    patch.insert(activity::ENDPOINT_PREF.into(), Value::String(endpoint.into()));
+    app.cfg.update_prefs(patch)?;
+    activity::refresh_config(endpoint);
+    Ok(())
 }
 
 #[tauri::command]
@@ -597,14 +635,14 @@ pub async fn llm_test(app: S<'_>, provider_id: String) -> Result<String> {
 #[tauri::command]
 pub async fn smart_replies(app: S<'_>, account_id: String, thread_id: String) -> Result<Vec<String>> {
     let d = sync::thread_detail(&app, &account_id, &thread_id).await?;
-    let raw = run_feature(&app, "smartReply", llm::SMART_REPLY_SYSTEM, &llm::thread_text(&d.summary.subject, &d.messages, 12_000)).await?;
+    let raw = run_feature(&app, "smartReply", Some(&thread_id), llm::SMART_REPLY_SYSTEM, &llm::thread_text(&d.summary.subject, &d.messages, 12_000)).await?;
     Ok(llm::parse_replies(&raw))
 }
 
 #[tauri::command]
 pub async fn summarize_thread(app: S<'_>, account_id: String, thread_id: String) -> Result<String> {
     let d = sync::thread_detail(&app, &account_id, &thread_id).await?;
-    run_feature(&app, "summary", llm::SUMMARY_SYSTEM, &llm::thread_text(&d.summary.subject, &d.messages, 30_000)).await
+    run_feature(&app, "summary", Some(&thread_id), llm::SUMMARY_SYSTEM, &llm::thread_text(&d.summary.subject, &d.messages, 30_000)).await
 }
 
 #[tauri::command]
@@ -613,10 +651,10 @@ pub async fn help_write(app: S<'_>, instruction: String, draft: String, account_
     if !draft.trim().is_empty() {
         prompt.push_str(&format!("\nCurrent draft:\n{draft}\n"));
     }
-    if let (Some(a), Some(t)) = (account_id, thread_id) {
-        if let Ok(d) = sync::thread_detail(&app, &a, &t).await {
+    if let (Some(a), Some(t)) = (account_id, thread_id.as_deref()) {
+        if let Ok(d) = sync::thread_detail(&app, &a, t).await {
             prompt.push_str(&format!("\nThread being replied to:\n{}\n", llm::thread_text(&d.summary.subject, &d.messages, 12_000)));
         }
     }
-    run_feature(&app, "write", llm::WRITE_SYSTEM, &prompt).await
+    run_feature(&app, "write", thread_id.as_deref(), llm::WRITE_SYSTEM, &prompt).await
 }

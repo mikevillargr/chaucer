@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { confirmDialog, Icon, IconButton, Spinner } from "../../components/ui";
 import { api } from "../../lib/ipc";
 import { usePrefs, useProviders, useSetPrefs } from "../../lib/queries";
@@ -63,6 +63,46 @@ function ProviderForm({ initial, onDone }: { initial?: ProviderInfo; onDone: () 
   );
 }
 
+function ActivityReporting() {
+  const toast = useUi((s) => s.toast);
+  const [endpoint, setEndpoint] = useState("");
+  const [token, setToken] = useState("");
+  const [hasToken, setHasToken] = useState(false);
+  const load = () => api.activityGet().then((c) => { setEndpoint(c.endpoint); setHasToken(c.hasToken); }).catch(() => {});
+  useEffect(() => { void load(); }, []);
+  const save = async (clear = false) => {
+    try {
+      await api.activitySave(clear ? "" : endpoint, clear ? "" : token || undefined);
+      setToken("");
+      await load();
+      toast({ text: clear ? "Activity reporting turned off" : "Activity reporting saved" });
+    } catch (e) {
+      toast({ text: String(e), error: true });
+    }
+  };
+  const on = !!endpoint.trim() && hasToken;
+  return (
+    <>
+      <h3 style={{ fontWeight: 500, margin: "32px 0 8px" }}>Activity reporting</h3>
+      <p className="lead">Report AI activity to a monitoring endpoint. Off unless you set both fields. Only the feature, model, duration and success are sent, never email content, subjects, addresses or prompts.</p>
+      <div className="card">
+        <div className="form-grid">
+          <label>Endpoint</label>
+          <input className="input" placeholder="https://…" autoComplete="off" value={endpoint} onChange={(e) => setEndpoint(e.target.value)} />
+          <label>Token</label>
+          <input className="input" type="password" autoComplete="off" placeholder={hasToken ? "Saved in Keychain — leave blank to keep" : "Access token"}
+            value={token} onChange={(e) => setToken(e.target.value)} />
+        </div>
+        <p className="muted" style={{ fontSize: 12 }}>{on ? "Reporting is on." : "Reporting is off."} The token is stored in your macOS Keychain.</p>
+        <div className="row-actions">
+          <button className="btn filled" onClick={() => void save()}>Save</button>
+          {(hasToken || endpoint) && <button className="btn text" onClick={() => void save(true)}>Turn off and clear</button>}
+        </div>
+      </div>
+    </>
+  );
+}
+
 export function SmartSettings() {
   const providers = useProviders();
   const prefs = usePrefs();
@@ -122,6 +162,7 @@ export function SmartSettings() {
           </select>
         </div>
       ))}
+      <ActivityReporting />
     </>
   );
 }

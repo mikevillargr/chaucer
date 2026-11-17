@@ -5,10 +5,17 @@ All notable changes to Chaucer. Versions follow [Semantic Versioning](https://se
 **MINOR** for new features, **PATCH** for fixes. Each GitHub release uses its section below as
 its release notes (see [docs/RELEASING.md](https://github.com/mikevillargr/chaucer/blob/main/docs/RELEASING.md)).
 
-## [Unreleased]
+## [1.7.0] - 2026-11-17
+
+### Mail
+- **Emails open much faster.** Chaucer now loads the emails at the top of your list in the
+  background, along with the one your pointer rests on and the next and previous ones, so most
+  open instantly. Emails you've already read no longer download again after you mark them read,
+  star or archive them; inline images load in parallel; and the subject shows straight away
+  while the rest of the email loads.
 
 ### Windows
-- **Chaucer now runs on Windows 10 and 11.** Download `Chaucer_X.Y.Z_x64-setup.exe` from the
+- **Chaucer now runs on Windows 10 and 11.** Download `Chaucer_1.7.0_x64-setup.exe` from the
   Releases page and run it: it installs just for you, with no administrator prompt. Windows
   SmartScreen may warn the first time because the installer isn't code-signed; choose
   **More info → Run anyway**. Chaucer updates itself afterwards, as on the Mac.
@@ -178,6 +185,7 @@ the Android Gmail app and built on the public Gmail API.
 - The app isn't notarized: approve it once in System Settings → Privacy & Security.
 - You need your own Google Cloud OAuth client; see [docs/google-setup.md](https://github.com/mikevillargr/chaucer/blob/main/docs/google-setup.md).
 
+[1.7.0]: https://github.com/mikevillargr/chaucer/releases/tag/v1.7.0
 [1.6.2]: https://github.com/mikevillargr/chaucer/releases/tag/v1.6.2
 [1.6.1]: https://github.com/mikevillargr/chaucer/releases/tag/v1.6.1
 [1.6.0]: https://github.com/mikevillargr/chaucer/releases/tag/v1.6.0

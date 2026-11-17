@@ -46,3 +46,6 @@ pub fn refresh_token_key(account: &str) -> String {
 pub fn llm_key(provider_id: &str) -> String {
     format!("llm:{provider_id}")
 }
+
+/// Keychain entry for the optional activity-reporting token.
+pub const ACTIVITY_TOKEN_KEY: &str = "activity:token";

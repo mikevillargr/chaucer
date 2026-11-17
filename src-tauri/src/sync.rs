@@ -141,19 +141,29 @@ pub async fn incremental(app: &App, account: &str) -> Result<(bool, Vec<ThreadSu
 /// Full thread with bodies; served from cache when the history id hasn't moved.
 pub async fn thread_detail(app: &App, account: &str, thread_id: &str) -> Result<ThreadDetail> {
     let cached_summary = app.db.thread(account, thread_id)?;
-    if let (Some(s), Some((hist, messages))) = (&cached_summary, app.db.thread_detail(account, thread_id)?) {
-        if hist == s.history_id {
-            return Ok(ThreadDetail { summary: s.clone(), messages });
+    let cached = app.db.thread_detail(account, thread_id)?;
+    if let (Some(s), Some((hist, messages))) = (&cached_summary, &cached) {
+        if *hist == s.history_id {
+            return Ok(ThreadDetail { summary: s.clone(), messages: messages.clone() });
         }
     }
     let gmail = match app.gmail(account).await {
         Ok(g) => g,
         // Offline or signed out: fall back to whatever is cached.
-        Err(e) => match (cached_summary, app.db.thread_detail(account, thread_id)?) {
+        Err(e) => match (cached_summary, cached) {
             (Some(s), Some((_, messages))) => return Ok(ThreadDetail { summary: s, messages }),
             _ => return Err(e),
         },
     };
+    // Label changes (marking read, starring) move the history id without touching bodies,
+    // so check the message list first and keep the cached bodies if no message came or went.
+    if let (Some(s), Some((_, messages))) = (&cached_summary, &cached) {
+        if let Some((summary, messages)) = parse::relabel(s, messages, &gmail.thread_minimal(thread_id).await?) {
+            app.db.upsert_thread(&summary)?;
+            app.db.put_thread_detail(account, thread_id, &summary.history_id, &messages)?;
+            return Ok(ThreadDetail { summary, messages });
+        }
+    }
     let full = gmail.thread_full(thread_id).await?;
     let summary = parse::summary(account, &full);
     let mut messages: Vec<Message> = full.messages.iter().map(parse::message).collect();
@@ -165,20 +175,41 @@ pub async fn thread_detail(app: &App, account: &str, thread_id: &str) -> Result<
     Ok(ThreadDetail { summary, messages })
 }
 
-/// Replaces `cid:` references in HTML bodies with data URLs for embedded images.
+/// Fetches threads into the cache ahead of time so opening them doesn't wait on Gmail.
+/// Runs a couple at a time so a thread the user actually clicks isn't stuck behind them.
+pub async fn prefetch(app: &App, threads: &[(String, String)]) {
+    stream::iter(threads)
+        .for_each_concurrent(2, |(account, thread_id)| async move {
+            let _ = thread_detail(app, account, thread_id).await;
+        })
+        .await;
+}
+
+/// Replaces `cid:` references in HTML bodies with data URLs for embedded images,
+/// downloading the images in parallel.
 async fn embed_inline_images(gmail: &Gmail, messages: &mut [Message]) {
-    for m in messages.iter_mut() {
-        let Some(html) = m.html.as_mut() else { continue };
-        for a in m.attachments.iter().filter(|a| a.content_id.is_some() && a.size <= MAX_INLINE_IMAGE) {
-            let cid = a.content_id.as_deref().unwrap();
-            if !html.contains(&format!("cid:{cid}")) {
-                continue;
-            }
-            if let Ok(data) = gmail.attachment(&m.id, &a.attachment_id).await {
-                let url = format!("data:{};base64,{}", a.mime_type, STANDARD.encode(data));
-                *html = html.replace(&format!("cid:{cid}"), &url);
-            }
-        }
+    let wanted: Vec<(usize, String, String, String)> = messages
+        .iter()
+        .enumerate()
+        .flat_map(|(i, m)| {
+            let html = m.html.as_deref().unwrap_or_default();
+            m.attachments
+                .iter()
+                .filter(move |a| a.size <= MAX_INLINE_IMAGE && a.content_id.as_ref().is_some_and(|cid| html.contains(&format!("cid:{cid}"))))
+                .map(move |a| (i, a.content_id.clone().unwrap(), a.mime_type.clone(), a.attachment_id.clone()))
+        })
+        .collect();
+    let fetched: Vec<(usize, String, String, Result<Vec<u8>>)> = stream::iter(wanted)
+        .map(|(i, cid, mime, attachment_id)| {
+            let message_id = messages[i].id.clone();
+            async move { (i, cid, mime, gmail.attachment(&message_id, &attachment_id).await) }
+        })
+        .buffer_unordered(CONCURRENCY)
+        .collect()
+        .await;
+    for (i, cid, mime, data) in fetched {
+        let (Ok(data), Some(html)) = (data, messages[i].html.as_mut()) else { continue };
+        *html = html.replace(&format!("cid:{cid}"), &format!("data:{mime};base64,{}", STANDARD.encode(data)));
     }
 }
 

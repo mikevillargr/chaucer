@@ -140,9 +140,43 @@ pub fn message(m: &GMessage) -> Message {
 }
 
 /// Builds the list-row summary for a thread fetched in `metadata` or `full` format.
-pub fn summary(account_id: &str, t: &GThread) -> ThreadSummary {
+/// The messages a thread's summary describes: trashed ones are left out unless all are.
+fn shown(t: &GThread) -> Vec<&GMessage> {
     let msgs: Vec<&GMessage> = t.messages.iter().filter(|m| !m.label_ids.iter().any(|l| l == "TRASH") || t.messages.iter().all(|m| m.label_ids.iter().any(|l| l == "TRASH"))).collect();
-    let msgs = if msgs.is_empty() { t.messages.iter().collect() } else { msgs };
+    if msgs.is_empty() { t.messages.iter().collect() } else { msgs }
+}
+
+/// Brings cached bodies up to date from a `format=minimal` fetch when only labels changed.
+/// Returns `None` when messages were added or removed and the thread needs a full fetch.
+pub fn relabel(summary: &ThreadSummary, cached: &[Message], current: &GThread) -> Option<(ThreadSummary, Vec<Message>)> {
+    if cached.len() != current.messages.len() {
+        return None;
+    }
+    let messages = current
+        .messages
+        .iter()
+        .map(|g| cached.iter().find(|m| m.id == g.id).map(|m| Message { label_ids: g.label_ids.clone(), ..m.clone() }))
+        .collect::<Option<Vec<Message>>>()?;
+    let mut labels: Vec<String> = Vec::new();
+    for l in shown(current).iter().flat_map(|m| &m.label_ids) {
+        if !labels.contains(l) {
+            labels.push(l.clone());
+        }
+    }
+    let has = |l: &str| labels.iter().any(|x| x == l);
+    let summary = ThreadSummary {
+        history_id: current.history_id.clone().unwrap_or_default(),
+        unread: has("UNREAD"),
+        starred: has("STARRED"),
+        important: has("IMPORTANT"),
+        label_ids: labels.clone(),
+        ..summary.clone()
+    };
+    Some((summary, messages))
+}
+
+pub fn summary(account_id: &str, t: &GThread) -> ThreadSummary {
+    let msgs = shown(t);
     let first = msgs.first().map(|m| message(m)).unwrap_or_default();
     let last = msgs.last().copied();
 
@@ -294,5 +328,36 @@ mod tests {
         assert_eq!(s.senders.len(), 2);
         assert!(s.unread && s.starred && !s.important);
         assert_eq!(s.message_count, 3);
+    }
+
+    #[test]
+    fn relabels_cached_bodies_only_when_messages_match() {
+        let minimal = |id: &str, labels: &[&str]| GMessage {
+            id: id.into(),
+            thread_id: "t".into(),
+            label_ids: labels.iter().map(|s| s.to_string()).collect(),
+            snippet: None,
+            internal_date: None,
+            payload: None,
+        };
+        let thread = |messages| GThread { id: "t".into(), history_id: Some("200".into()), snippet: None, messages };
+        let cached = vec![
+            Message { id: "a".into(), html: Some("<p>one</p>".into()), label_ids: vec!["INBOX".into()], ..Default::default() },
+            Message { id: "b".into(), html: Some("<p>two</p>".into()), label_ids: vec!["INBOX".into(), "UNREAD".into()], ..Default::default() },
+        ];
+        let summary = ThreadSummary { id: "t".into(), history_id: "100".into(), subject: "Plans".into(), unread: true, ..Default::default() };
+
+        // Marked read elsewhere: bodies are reused, labels and history id move on.
+        let read = thread(vec![minimal("a", &["INBOX"]), minimal("b", &["INBOX", "STARRED"])]);
+        let (s, msgs) = relabel(&summary, &cached, &read).expect("same messages");
+        assert_eq!(s.history_id, "200");
+        assert_eq!(s.subject, "Plans");
+        assert!(!s.unread && s.starred);
+        assert_eq!(msgs[1].html.as_deref(), Some("<p>two</p>"));
+        assert_eq!(msgs[1].label_ids, vec!["INBOX".to_string(), "STARRED".to_string()]);
+
+        // A reply arrived, or a draft was replaced: needs a full fetch.
+        assert!(relabel(&summary, &cached, &thread(vec![minimal("a", &[]), minimal("b", &[]), minimal("c", &[])])).is_none());
+        assert!(relabel(&summary, &cached, &thread(vec![minimal("a", &[]), minimal("d", &[])])).is_none());
     }
 }

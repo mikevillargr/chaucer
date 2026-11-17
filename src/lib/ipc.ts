@@ -57,6 +57,7 @@ export const api = {
   recentSearches: () => call<string[]>("recent_searches"),
   clearRecentSearches: () => call<void>("clear_recent_searches"),
   getThread: (accountId: string, threadId: string) => call<ThreadDetail>("get_thread", { accountId, threadId }),
+  prefetchThreads: (threads: ThreadRef[]) => call<void>("prefetch_threads", { threads }),
 
   act: (threads: ThreadRef[], op: "modify" | "trash" | "untrash", add: string[] = [], remove: string[] = []) =>
     call<ThreadSummary[]>("act_on_threads", { threads, op, add, remove }),

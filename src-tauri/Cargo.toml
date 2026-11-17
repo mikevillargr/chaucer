@@ -16,7 +16,7 @@ chrono = "0.4.45"
 encoding_rs = "0.8.42"
 futures = "0.3.34"
 html-escape = "0.3.0"
-keyring = { version = "3", features = ["apple-native", "linux-native"] }
+keyring = { version = "3", features = ["apple-native", "windows-native", "linux-native"] }
 log = "0.4.34"
 mail-builder = "2.0.0"
 rand = "0.10.3"
@@ -36,6 +36,11 @@ tauri-plugin-updater = "2"
 thiserror = "2.0.21"
 tokio = { version = "1.54.1", features = ["macros", "rt-multi-thread", "net", "io-util", "time", "sync"] }
 url = "2.5.8"
+
+# WebView2 settings (browser accelerator keys) are not exposed by tauri itself.
+[target.'cfg(windows)'.dependencies]
+webview2-com = "0.39"
+windows-core = "0.62"
 
 [dev-dependencies]
 tempfile = "3.27.0"

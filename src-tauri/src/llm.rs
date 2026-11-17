@@ -1,5 +1,5 @@
 //! Bring-your-own-key LLM providers for the smart features. Provider settings live in
-//! preferences (`llmProviders`, `llmFeatures`); API keys live in the Keychain.
+//! preferences (`llmProviders`, `llmFeatures`); API keys live in the OS credential store.
 
 use crate::error::{Error, Result};
 use crate::model::Message;

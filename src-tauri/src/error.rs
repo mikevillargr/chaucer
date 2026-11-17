@@ -14,7 +14,7 @@ pub enum Error {
     Http(#[from] reqwest::Error),
     #[error("Database error: {0}")]
     Db(#[from] rusqlite::Error),
-    #[error("Keychain error: {0}")]
+    #[error("Credential store error: {0}")]
     Keychain(#[from] keyring::Error),
     #[error("{0}")]
     Io(#[from] std::io::Error),

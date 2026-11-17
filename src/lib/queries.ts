@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { QueryClient, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./ipc";
 import { refKey, useUi, type View } from "./store";
@@ -31,12 +32,32 @@ export const useLabels = (accountId: string | null) =>
 export const useSendAs = (accountId: string) =>
   useQuery({ queryKey: ["sendAs", accountId], queryFn: () => api.sendAs(accountId), staleTime: 10 * 60_000 });
 
+const threadQuery = (ref: ThreadRef) => ({
+  queryKey: ["thread", ref.accountId, ref.threadId],
+  queryFn: () => api.getThread(ref.accountId, ref.threadId),
+});
+
 export const useThread = (ref: ThreadRef | null) =>
-  useQuery({
-    queryKey: ["thread", ref?.accountId, ref?.threadId],
-    queryFn: () => api.getThread(ref!.accountId, ref!.threadId),
-    enabled: !!ref,
-  });
+  useQuery({ ...threadQuery(ref ?? { accountId: "", threadId: "" }), enabled: !!ref });
+
+/** Loads a thread in the background so opening it is instant. */
+export function usePrefetchThread() {
+  const qc = useQueryClient();
+  return useCallback((ref: ThreadRef) => void qc.prefetchQuery(threadQuery(ref)), [qc]);
+}
+
+/** The list row for a thread, if any list has it: shown while the full thread loads. */
+export function listedSummary(qc: QueryClient, ref: ThreadRef): ThreadSummary | undefined {
+  const match = (t: ThreadSummary) => t.id === ref.threadId && t.accountId === ref.accountId;
+  for (const [, data] of qc.getQueriesData<{ pages: ThreadPage[] }>({ queryKey: ["threads"] })) {
+    const t = data?.pages.flatMap((p) => p.threads).find(match);
+    if (t) return t;
+  }
+  for (const [, data] of qc.getQueriesData<ThreadSummary[]>({ queryKey: ["cached"] })) {
+    const t = data?.find(match);
+    if (t) return t;
+  }
+}
 
 export const useProviders = () => useQuery({ queryKey: ["providers"], queryFn: api.llmProviders });
 

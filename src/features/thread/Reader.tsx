@@ -5,7 +5,7 @@ import { Avatar, confirmDialog, Icon, IconButton, Menu, Spinner } from "../../co
 import { displayName, formatAddr, fullDate, parseMailto, shortDate } from "../../lib/format";
 import { api, native } from "../../lib/ipc";
 import { chipLabels } from "../../lib/labels";
-import { useAccounts, useActions, useLabels, usePrefs, useProviders, useThread } from "../../lib/queries";
+import { listedSummary, useAccounts, useActions, useLabels, usePrefetchThread, usePrefs, useProviders, useThread } from "../../lib/queries";
 import { useUi } from "../../lib/store";
 import type { Message, ThreadDetail, ThreadRef } from "../../lib/types";
 import { useStartCompose } from "../compose/startCompose";
@@ -214,6 +214,7 @@ export function Reader() {
   const { data: detail, isLoading, error } = useThread(selected);
   const labels = useLabels(selected?.accountId ?? null).data ?? [];
   const { run, setLabels } = useActions();
+  const prefetch = usePrefetchThread();
   const confirmed = useConfirmed();
   const advance = useAdvance();
   const startCompose = useStartCompose();
@@ -246,6 +247,15 @@ export function Reader() {
     if (detail?.summary.unread) void run("read", [{ accountId: detail.summary.accountId, threadId: detail.summary.id }], { quiet: true });
   }, [detail?.summary.id, detail?.summary.unread]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Next and previous are a keypress (or an archive) away: have them ready.
+  useEffect(() => {
+    if (!detail) return;
+    const { order } = useUi.getState();
+    const i = order.findIndex((r) => r.threadId === detail.summary.id && r.accountId === detail.summary.accountId);
+    if (i < 0) return;
+    for (const r of [order[i + 1], order[i - 1]]) if (r) prefetch(r);
+  }, [detail?.summary.id, prefetch]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const visible = useMemo(() => {
     if (!detail) return [];
     const msgs = detail.messages;
@@ -265,6 +275,7 @@ export function Reader() {
   }
 
   const ref = selected;
+  const placeholder = isLoading ? listedSummary(qc, ref) : undefined;
   const summaryRow = detail?.summary;
   const inTrash = summaryRow?.labelIds.includes("TRASH");
   const inSpam = summaryRow?.labelIds.includes("SPAM");
@@ -314,7 +325,12 @@ export function Reader() {
         <IconButton icon="chevron_right" label="Older (j)" onClick={() => moveSel(1)} />
       </div>
       <div className="reader-body" ref={bodyRef}>
-        {isLoading && <div className="empty"><Spinner /></div>}
+        {isLoading && (placeholder ? (
+          <>
+            <div className="thread-title"><h1>{placeholder.subject}</h1></div>
+            <div className="empty" style={{ height: "auto" }}><Spinner /></div>
+          </>
+        ) : <div className="empty"><Spinner /></div>)}
         {error && <div className="empty"><div><Icon name="error" /><div>{String(error)}</div></div></div>}
         {detail && summaryRow && (
           <>

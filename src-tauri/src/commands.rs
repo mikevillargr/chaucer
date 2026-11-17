@@ -178,6 +178,14 @@ pub async fn get_thread(app: S<'_>, account_id: String, thread_id: String) -> Re
     sync::thread_detail(&app, &account_id, &thread_id).await
 }
 
+/// Warms the cache for threads the user is likely to open next (top of the list).
+#[tauri::command]
+pub async fn prefetch_threads(app: S<'_>, threads: Vec<ThreadRef>) -> Result<()> {
+    let threads: Vec<(String, String)> = threads.into_iter().map(|t| (t.account_id, t.thread_id)).collect();
+    sync::prefetch(&app, &threads).await;
+    Ok(())
+}
+
 // ---- actions -----------------------------------------------------------------------
 
 #[derive(Deserialize)]

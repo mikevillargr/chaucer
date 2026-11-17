@@ -163,6 +163,7 @@ const handlers: Record<string, (a: any) => unknown> = {
     const summary = threads.find((t) => t.id === threadId)!;
     return { summary, messages: details.get(threadId) ?? [] };
   },
+  prefetch_threads: () => undefined,
   act_on_threads: ({ threads: refs, op, add = [], remove = [] }) => {
     const out: ThreadSummary[] = [];
     for (const r of refs as { threadId: string }[]) {

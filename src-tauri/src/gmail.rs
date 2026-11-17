@@ -302,6 +302,11 @@ impl Gmail {
         Ok(serde_json::from_value(self.get(&format!("/threads/{id}"), &query).await?)?)
     }
 
+    /// Message ids and labels only: enough to tell whether cached bodies are still current.
+    pub async fn thread_minimal(&self, id: &str) -> Result<GThread> {
+        Ok(serde_json::from_value(self.get(&format!("/threads/{id}"), &[("format", "minimal".into())]).await?)?)
+    }
+
     pub async fn thread_full(&self, id: &str) -> Result<GThread> {
         Ok(serde_json::from_value(self.get(&format!("/threads/{id}"), &[("format", "full".into())]).await?)?)
     }

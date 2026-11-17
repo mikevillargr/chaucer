@@ -144,6 +144,7 @@ pub fn run() {
             commands::recent_searches,
             commands::clear_recent_searches,
             commands::get_thread,
+            commands::prefetch_threads,
             commands::act_on_threads,
             commands::block_sender,
             commands::unsubscribe,

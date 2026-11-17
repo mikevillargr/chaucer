@@ -3,7 +3,8 @@ import { readableOn } from "../../lib/color";
 import { Avatar, Icon, IconButton, Spinner } from "../../components/ui";
 import { shortDate, sendersLine } from "../../lib/format";
 import { CATEGORIES, chipLabels, labelName } from "../../lib/labels";
-import { useAccounts, useActions, useLabels, usePrefs, useThreadList } from "../../lib/queries";
+import { api } from "../../lib/ipc";
+import { useAccounts, useActions, useLabels, usePrefetchThread, usePrefs, useThreadList } from "../../lib/queries";
 import { refKey, useUi } from "../../lib/store";
 import type { ThreadSummary } from "../../lib/types";
 import { useConfirmed } from "../thread/useConfirmed";
@@ -20,6 +21,8 @@ function Row({ t, me, folder, selected, checked, onOpen, onCheck }: {
   const wrapRef = useRef<HTMLDivElement>(null);
   const rowRef = useRef<HTMLDivElement>(null);
   const labels = useLabels(t.accountId).data ?? [];
+  const prefetch = usePrefetchThread();
+  const hover = useRef<number | undefined>(undefined);
   const ref = { accountId: t.accountId, threadId: t.id };
   const chips = chipLabels(t.labelIds, labels).slice(0, 3);
   const last = t.senders[t.senders.length - 1] ?? { name: "", email: "" };
@@ -50,6 +53,9 @@ function Row({ t, me, folder, selected, checked, onOpen, onCheck }: {
       ref={rowRef}
       className={`row ${t.unread ? "unread" : ""} ${selected ? "selected" : ""} ${checked ? "checked" : ""}`}
       onClick={onOpen}
+      // Resting on a row is a good sign it's next: start loading it.
+      onMouseEnter={() => { hover.current = window.setTimeout(() => prefetch(ref), 150); }}
+      onMouseLeave={() => window.clearTimeout(hover.current)}
       role="option"
       aria-selected={selected}
       data-thread={t.id}
@@ -146,6 +152,15 @@ export function ThreadList() {
     setOrder(ordered.map((t) => ({ accountId: t.accountId, threadId: t.id })));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderKey, setOrder]);
+
+  // Load the top of the list in the background so the first clicks open instantly.
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void api.prefetchThreads(ordered.slice(0, 15).map((t) => ({ accountId: t.accountId, threadId: t.id }))).catch(() => {});
+    }, 500);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderKey]);
 
   // Keep the selected row in view when moving with j/k.
   useEffect(() => {

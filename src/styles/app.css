@@ -493,3 +493,13 @@ kbd { font: 500 11.5px var(--font-mono); background: var(--surface-container-low
 :root[data-platform="windows"] .lightbox-bar { padding-right: var(--win-controls-w); }
 :root[data-platform="windows"] .app.no-reader .list-head { padding-right: calc(var(--win-controls-w) + 8px); }
 :root[data-platform="windows"] .settings-main { margin-top: 32px; }
+/* Each message in a thread is its own card. --msg-edge is stronger than the --outline-variant
+   hairline, which disappears in dark mode. */
+:root[data-platform="windows"] .msg {
+  --msg-edge: color-mix(in srgb, var(--outline) 45%, transparent);
+  background: var(--surface); border: 1px solid var(--msg-edge); border-radius: 14px;
+  padding: 14px 16px; margin-bottom: 10px;
+}
+:root[data-platform="windows"] .msg.collapsed { cursor: pointer; padding: 10px 16px; transition: background-color 0.2s; }
+:root[data-platform="windows"] .msg.collapsed:hover { background: var(--hover); }
+:root[data-platform="windows"] .collapsed-group { margin: 0 0 10px; }

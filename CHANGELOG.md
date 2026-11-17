@@ -5,6 +5,12 @@ All notable changes to Chaucer. Versions follow [Semantic Versioning](https://se
 **MINOR** for new features, **PATCH** for fixes. Each GitHub release uses its section below as
 its release notes (see [docs/RELEASING.md](https://github.com/mikevillargr/chaucer/blob/main/docs/RELEASING.md)).
 
+## [Unreleased]
+
+### Windows
+- **Clearer conversations.** Each message in a thread now sits on its own card, so it is easy
+  to see where one message ends and the next begins, in light and dark themes.
+
 ## [1.7.0] - 2026-11-17
 
 ### Mail

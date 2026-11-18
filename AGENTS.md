@@ -1,7 +1,7 @@
 # AGENTS.md: Chaucer
 
 Guidance for agents working on this repo. Environment-specific details (server addresses,
-SSH, preview URLs, key backup locations) are in `AGENTS.local.md`, which is git-ignored; read
+SSH, key backup locations) are in `AGENTS.local.md`, which is git-ignored; read
 it if it exists. This repo is **public**: never commit secrets, keys, IP addresses, pairing
 links, the Android APK, or the Growth Rocket design-system bundle.
 
@@ -61,23 +61,33 @@ Secrets never cross into the webview: tokens and API keys stay in Rust and the K
 
 ## Development
 
-Everything runs in containers on the dev server through `scripts/dev/compose.sh` (a wrapper
-around `compose.dev.yml`). Don't install dependencies or run builds in the agent container.
+Builds and tests run natively on Mike's two machines, never on the Linux server:
+
+- **macOS:** Mike's Mac (Paseo host "Mike's Mac", repo `~/code/chaucer`).
+- **Windows:** NORAD, Mike's PC (Paseo host "Mike's Windows", repo `C:\Users\mike\code\chaucer`).
+- **Agents on the Linux server** don't run builds, tests or a preview. The old container setup
+  (`compose.dev.yml`, `scripts/dev/compose.sh`) and the :3010 preview server are retired. If a
+  browser check is really needed, run `npm run dev:web` on the Mac for that check and stop it
+  afterwards.
+- **Disk:** a daily job on each machine empties `src-tauri/target` once it passes 8 GB, so Rust
+  build output can't grow without limit. Expect the next build after a cleanup to be a full one.
+
+On the Mac, from the repo root:
 
 ```sh
-scripts/dev/compose.sh up -d dev                                   # UI preview, mock data, port 3010
-scripts/dev/compose.sh run --rm --no-deps dev npm run typecheck
-scripts/dev/compose.sh run --rm --no-deps dev npx vitest run
-scripts/dev/compose.sh run --rm --no-deps -w /app/src-tauri dev cargo test
+npm ci
+npm run typecheck
+npx vitest run
+cd src-tauri && cargo test
 ```
 
-macOS apps can't be built on Linux. The dmg is built only by `release.yml` on GitHub's macOS
-runners (or locally on a Mac with `npm run tauri build`).
+`cargo` lives in `~/.cargo/bin`; if a shell can't find it, run `. "$HOME/.cargo/env"` first.
+The dmg is built only by `release.yml` on GitHub's macOS runners (or locally on a Mac with
+`npm run tauri build`).
 
-### Windows (Mike's PC)
+### Windows (Mike's PC, NORAD)
 
-The container rule above is for the Linux dev server only. On Mike's Windows PC (repo at
-`C:\Users\mike\code\chaucer`) work natively: Rust stable `x86_64-pc-windows-msvc` (rustup), VS Build
+On Mike's Windows PC (repo at `C:\Users\mike\code\chaucer`) work natively: Rust stable `x86_64-pc-windows-msvc` (rustup), VS Build
 Tools 2022 with the C++ workload, Node, WebView2 (already on Windows 11). Then `npm ci`,
 `npm run typecheck`, `npx vitest run`, `cargo test` in `src-tauri`, `npm run tauri build`
 (produces `src-tauri/target/release/bundle/nsis/Chaucer_X.Y.Z_x64-setup.exe`). `cargo`/`gh` may not
@@ -85,7 +95,7 @@ be on a fresh shell's PATH: use `%USERPROFILE%\.cargo\bin`.
 
 - **Platform flag:** `src/lib/platform.ts` sets `<html data-platform="windows"|"mac">` once at
   startup from the user agent (`?platform=windows` forces it in the browser preview and dev
-  builds, so the Windows layout can be checked on Linux). Anything that isn't Windows keeps the
+  builds, so the Windows layout can be checked in a browser on the Mac). Anything that isn't Windows keeps the
   original Mac-style UI. Use `formatShortcut()`/`hint()` for key labels and the helpers there for
   platform-dependent copy; don't hard-code ⌘ or "Keychain" in the UI.
 - **Windows-only Rust** is `#[cfg(windows)]`/`target_os = "windows"` gated; the macOS path must not change.
@@ -96,11 +106,12 @@ be on a fresh shell's PATH: use `%USERPROFILE%\.cargo\bin`.
 - **Mike's PC is his working machine.** Don't drive the desktop with synthetic mouse/keyboard input
   or pop windows/toasts without asking: he may be presenting or on a call.
 
-### Browser checks (Playwright container, against the preview)
+### Browser checks (only when really needed)
 
-Run them with the Playwright image (`mcr.microsoft.com/playwright:v1.56.0-noble`); copy the
-script into `/tmp` inside the container first, because ESM resolves `playwright` relative to the
-script's own folder.
+There is no standing preview server. Start `npm run dev:web` on the Mac (mock data, port 3010),
+run the check against it, and stop it afterwards. These Playwright scripts were written for the
+retired container setup (Playwright image `mcr.microsoft.com/playwright:v1.56.0-noble`), so they
+may need adjusting to run on the Mac; ESM resolves `playwright` relative to the script's own folder.
 
 | Script | Checks |
 | --- | --- |

@@ -5,6 +5,13 @@ All notable changes to Chaucer. Versions follow [Semantic Versioning](https://se
 **MINOR** for new features, **PATCH** for fixes. Each GitHub release uses its section below as
 its release notes (see [docs/RELEASING.md](https://github.com/mikevillargr/chaucer/blob/main/docs/RELEASING.md)).
 
+## [Unreleased]
+
+### Mail
+- **Quoted text in replies and forwards can be selected, copied and edited.** Click the "…"
+  under your message to open the original; it works like Gmail's, so you can trim it or
+  comment between its lines. If you don't touch it, it is sent exactly as received.
+
 ## [1.7.1] - 2026-11-17
 
 ### Windows

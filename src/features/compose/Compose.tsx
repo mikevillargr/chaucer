@@ -31,6 +31,29 @@ function extractInlineImages(html: string): { html: string; inline: DraftAttachm
 
 const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
 
+const QUOTE_STYLE = 'class="gmail_quote" style="margin:0 0 0 .8ex;border-left:1px solid #ccc;padding-left:1ex"';
+
+/**
+ * The quoted original, selectable and editable like Gmail's "…" section. The original markup is
+ * only replaced once the user changes something, so an untouched quote is sent exactly as received.
+ * Images are left out of this editor on purpose: it would load remote images the reader blocks.
+ */
+function QuotedEditor({ html, onEdit }: { html: string; onEdit: (html: string) => void }) {
+  const editor = useEditor({
+    extensions: [StarterKit.configure({ link: false }), Link.configure({ openOnClick: false })],
+    content: html,
+    onUpdate: ({ editor: e }) => {
+      const body = e.getHTML().replace(/<blockquote>/g, `<blockquote ${QUOTE_STYLE}>`);
+      onEdit(`<div class="gmail_quote">${body}</div>`);
+    },
+  });
+  return (
+    <div className="quoted-editor" aria-label="Quoted text">
+      <EditorContent editor={editor} />
+    </div>
+  );
+}
+
 export function Compose({ c }: { c: ComposeState }) {
   const { updateCompose, closeCompose, toast } = useUi();
   const qc = useQueryClient();
@@ -273,7 +296,7 @@ export function Compose({ c }: { c: ComposeState }) {
               <button className="quoted-toggle" style={{ margin: "0 16px 8px" }} title={showQuoted ? "Hide quoted text" : "Show quoted text"} onClick={() => setShowQuoted(!showQuoted)}>
                 <Icon name="more_horiz" />
               </button>
-              {showQuoted && <div className="quoted-preview" dangerouslySetInnerHTML={{ __html: htmlToText(c.quoted).replace(/[<>&]/g, (ch) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[ch]!).replace(/\n/g, "<br>") }} />}
+              {showQuoted && <QuotedEditor html={c.quoted} onEdit={(quoted) => set({ quoted })} />}
             </>
           )}
           {c.attachments.length > 0 && (

@@ -52,15 +52,16 @@ Needs the Microsoft Edge WebView2 runtime, which is already part of Windows 11 a
 
 ## Develop
 
-Everything runs in containers on the VPS (`scripts/dev/compose.sh` wraps `compose.dev.yml`):
+On macOS, develop natively: install Rust and Node, then:
 
 ```sh
-scripts/dev/compose.sh up -d dev                       # UI preview with mock data on :3010
-scripts/dev/compose.sh run --rm dev npm test           # frontend tests
-scripts/dev/compose.sh run --rm -w /app/src-tauri dev cargo test
+npm ci
+npm run dev:web                # UI preview with mock data in a browser, on :3010
+npm test                       # frontend tests
+(cd src-tauri && cargo test)   # Rust tests
 ```
 
-On Windows, develop natively (no containers): install Rust (MSVC toolchain), the Visual Studio Build
+On Windows, develop natively too: install Rust (MSVC toolchain), the Visual Studio Build
 Tools "Desktop development with C++" workload and Node, then `npm ci`, `npm run tauri dev` /
 `npm run tauri build`. `src-tauri/tauri.windows.conf.json` is merged over `tauri.conf.json` there
 (NSIS installer, frameless window with our own title bar). In a browser preview, add

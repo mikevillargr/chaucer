@@ -302,7 +302,10 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 650; letter-spacing:
 .editor .tiptap p { margin: 0 0 8px; }
 .editor .tiptap p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: var(--on-surface-variant); float: left; height: 0; pointer-events: none; }
 .quoted-toggle { margin: 0 16px 8px; align-self: flex-start; border: 0; background: var(--surface-container-high); border-radius: var(--r-pill); padding: 0 8px; height: 18px; display: grid; place-items: center; }
-.quoted-preview { margin: 0 16px 8px; max-height: 160px; overflow: auto; color: var(--on-surface-variant); font-size: 13px; border-left: 2px solid var(--outline-variant); padding-left: 10px; }
+.quoted-editor { margin: 0 16px 8px; max-height: 160px; overflow: auto; color: var(--on-surface-variant); font-size: 13px; border-left: 2px solid var(--outline-variant); padding-left: 10px; user-select: text; -webkit-user-select: text; }
+.quoted-editor .tiptap { outline: none; }
+.quoted-editor .tiptap p { margin: 0 0 6px; }
+.quoted-editor .tiptap blockquote { margin: 0 0 0 .8ex; border-left: 1px solid var(--outline-variant); padding-left: 1ex; }
 .compose-atts { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 16px 8px; }
 .compose-atts .recip { background: var(--surface-container); }
 .compose-foot { flex: none; display: flex; align-items: center; gap: 4px; padding: 8px 12px 12px; }
